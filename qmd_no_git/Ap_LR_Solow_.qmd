@@ -1,0 +1,1607 @@
+---
+title: "Implementing the Solow Model"
+subtitle: "Course ECON 381 - Advanced Project: Long Run"
+author: "Name here"
+date: "March 10, 2025"
+format:
+  html:
+    self-contained: true
+    page-layout: full # article default custom
+    theme:
+      light: [flatly] # more themes can be found (https://quarto.org/docs/output-formats/html-themes.html)
+      dark: [darkly]
+    fontsize: 0.95em # changes all fonts. default is 1
+    linestretch: 1.5 # distance btw lines. defualt is 1.5
+    math: katex
+    toc: true # switch between: false or true
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: true
+        toggle: true
+        caption: See code
+execute:
+  python: .venv/Scripts/python.exe # important. If using this in a folder inside the root folder, use two periods for the program to know to read one folder back: ../.venv/Scripts/python.exe
+editor:
+  markdown:
+    wrap: sentence
+---
+
+
+$$Y \text{ = } \bar{A}K_t^{\alpha}L_t^{1-\alpha}$$
+
+
+# Preliminaries 
+
+The code below will illustrate how to create a dataframe that grows with a loop. This is an important skill that will be used throughout this homework assignment and the remainder of the course. This example is only an illustration of principles of coding. The particular application will vary depending on the circumstance.
+
+
+```{python}
+# This code is a great when doing quantitative experiments to see how long it takes, lets say output to hit a certain number etc etc.
+
+# This example shows two variables, one that is growing and one that is decreasing over time.
+# The loop that follows creates a time-path for each variable until the point where both 
+# series meet.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+# Define parameters and exogeneous variables
+
+a1_0 = 10      #Array 1 initial value
+a2_0 = 50      #Array 2 initial value
+epsilon = 1    #While loop tolerance
+
+# Defining the arrays and loop index i
+
+i = 0
+time = [0]
+array1 = np.array([a1_0])
+array2 = np.array([a2_0])
+
+
+
+# Using a while loop to run until we are within epsilon of the ending condition
+
+while array2[i]-array1[i] > epsilon:
+    i += 1
+    time = np.append(time, i)
+    array1 = np.append(array1, array1[i - 1] + 1) 
+    array2 = np.append(array2, array2[i - 1] - 1)
+    
+# Print the results
+print('Reached ending condition in',time[i],'time periods')
+
+
+# Create a data frame with the final values
+
+df = pd.DataFrame({'Time':time, 
+                   'Array1':array1, 
+                   'Array2':array2}, 
+                    columns=['Time', 'Array1', 'Array2'])
+
+
+plt.plot(time, array1, 'orange', label = 'Output')
+plt.plot(time, array2, 'blue', label = 'Depreciation')
+plt.title('Meeting Series')
+plt.xlabel('Time Period')
+plt.legend()
+plt.show()
+
+```
+
+__Second example__
+
+
+
+```{python}
+# this is like using the quantitative experiments in the latter models, but this process is more simple. Since this experiments change, I think im better off doing similar to quantitative experiments to avoid changing the errays each time. 
+
+# Suppose that instead you want to merge two time series into one array to illustrate what happens before and after an event.
+# One way to do this in a dynamic setting like this one is to create an index that will span both time series
+# and build them into one array through loops. 
+# The following example will show you how to create a time-path of a variable that experiences a change during its path.
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Define parameters and exogeneous variables
+
+a1_0 = 10      #Array 1 initial value
+a2_0 = 50      #Array 2 initial value
+epsilon = 1    #While loop tolerance
+
+# Defining the arrays and loop index i
+
+i = 0
+time = [0]
+array1 = np.array([a1_0])
+array2 = np.array([a2_0])
+
+
+# For the first 10 periods array 1 will increase by only 0.3 each time period. At the end of time 
+# period 10 array 1 will grow at 2 per period.
+# Note that array 2 is decreasing 1 unit per period.
+
+for i in range(0, 10):
+    i += 1    
+    time = np.append(time, i)
+    array1 = np.append(array1, array1[i - 1] + 0.3) 
+    array2 = np.append(array2, array2[i - 1] - 1)
+
+# Now start a while loop starting where we left of and let it  run until we are within epsilon of the ending condition
+# Note that because we haven't re-defined the variable i, the variable i is still at the value 10, where the previous
+# loop finished. The first line of this new loop (i += 1) will move the counter to i=11 and start the counter again. 
+
+while array2[i]-array1[i] > epsilon:
+    i += 1
+    time = np.append(time, i)
+    array1 = np.append(array1, array1[i - 1] + 1) 
+    array2 = np.append(array2, array2[i - 1] - 1)
+    
+# Print the results
+
+print('Reached ending condition in',time[i],'time periods')
+
+# Create the dataframe by combining the arrays. 
+
+df = pd.DataFrame({'Time':time, 
+                   'Array1':array1, 
+                   'Array2':array2}, 
+                    columns=['Time', 'Array1', 'Array2'])
+
+
+plt.plot(time, array1, 'orange', label = 'Output')
+plt.plot(time, array2, 'blue', label = 'Depreciation')
+plt.title('Meeting Series')
+plt.xlabel('Time Period')
+plt.legend()
+plt.show()
+
+display(df)
+
+
+```
+
+
+
+# Q1 Implementing the Solow Model using Python
+
+The Solow model incorporates the evolution of variables over time (dynamics). This question will walk you through implementing the Solow model numerically using Python. The end goal of this exercise is to teach you how to use the model to generate a time series that shows the change in output and capital over time.
+
+| Description             | Formula                           |
+|-------------------------|-----------------------------------|
+| Unknowns/endogenous variables:     | $Y_t$, $K_t$, $L_t$, $C_t$, $I_t$ | 
+| Production Function: | $Y \text{ = } \bar{A}K_t^{\alpha}L_t^{1-\alpha}$|
+| Capital Accumulation:   | $\Delta K_{t+1}$ = $ I_t -$ $\bar{d}K_t$ |
+| Labor Force: | $L_t = \bar{L}$ |
+| Resource Constraint: | $C_t + I_t = Y_t$ |
+| Allocation of Resources: | $I_t = \bar{s}Y_t$ |
+| Parameters | $\bar{A}$, $\bar{s}$, $\bar{d}$, $\bar{L}$, $\bar{K_0}$ |
+
+
+
+The text below shows how to find the steady state of capital and production found in the textbook. The solution below doesn't use numbers for the parameters of the capital share, instead we use $\alpha$ as the capital share of output and $(1-\alpha)$ for the labor share of output. 
+
+The steady-state level of capital is such that 
+
+$$
+\bar{s}Y^\ast = \bar{d}K^{\ast}.
+$$
+
+Substituting from the production function for $Y^\ast$ we see that 
+
+$$
+\bar{s}\bar{A}K^{\ast \alpha}\bar{L}^{1 - \alpha} = \bar{d}K^\ast.
+$$
+
+We now solve for $K^\ast$ which yields 
+
+\begin{align*}
+\bar{s}\bar{A}K^{\ast \alpha}\bar{L}^{1 - \alpha} &= \bar{d}K^\ast\\
+\bar{s}\bar{A}\bar{L}^{1 - \alpha} &= \frac{\bar{d}K^\ast}{K^{\ast \alpha}}\\
+\frac{\bar{s}\bar{A}}{\bar{d}}\bar{L}^{1 - \alpha} &= K^{\ast 1 - \alpha}\\
+\left(\frac{\bar{s}\bar{A}}{\bar{d}}\right)^\frac{1}{1 - \alpha}\left(\bar{L}^{1 - \alpha}\right)^\frac{1}{1 - \alpha} & = \left(K^{\ast 1 - \alpha}\right)^\frac{1}{1 - \alpha}\\
+K^\ast & = \left(\frac{\bar{s}\bar{A}}{\bar{d}}\right)^\frac{1}{1 - \alpha}\bar{L}\\
+\end{align*}
+
+as required.
+
+We will now find the steady-state level of production. Using the production function we have
+
+$$
+Y^{\ast} = \bar{A} K^{\ast\alpha}\bar{L}^{1 - \alpha}.
+$$
+
+Substituting the solutions for $K^\ast$ into this equation yields
+
+\begin{align*}
+Y^\ast =& \bar{A}\left[\left(\frac{\bar{s}\bar{A}}{\bar{d}}\right)^\frac{1}{1 - \alpha}\bar{L} \right]^\alpha\bar{L}^{1 - \alpha}\\
+=& \bar{A}\left(\frac{\bar{s}\bar{A}}{\bar{d}}\right)^\frac{\alpha}{1 - \alpha}\bar{L}^{ \ \alpha + 1 - \alpha}\\
+=& \bar{A} \cdot \bar{A}^\frac{\alpha}{1 - \alpha}\left(\frac{\bar{s}}{\bar{d}}\right)^\frac{\alpha}{1 - \alpha}\bar{L}^{ \ \alpha + 1 - \alpha}\\
+=& \left(\frac{\bar{s}}{\bar{d}}\right)^\frac{\alpha}{1 - \alpha}\bar{A}^\frac{1}{1 - \alpha}\bar{L}
+\end{align*}
+
+thus giving the steady state of production as required.
+
+
+__Part A__: Let $K_0 = 100$, $L = 1000$, $A = 1$, $\bar{d} = 0.15$, $\bar{s} = 0.25$, and $\alpha=1/3$. What are the numerical values for $K^*$ and $Y^*$? 
+
+$$
+\left(\frac{\bar{s}\bar{A}}{\bar{d}}\right)^\frac{1}{1 - \alpha}\bar{L} = K^\ast
+$$
+
+$$
+\bar{A}^\frac{1}{1 - \alpha}\left(\frac{\bar{s}}{\bar{d}}\right)^\frac{\alpha}{1 - \alpha}\bar{L}= Y^\ast
+$$
+
+__Formula's for K* and Y* steady state__
+```{python}
+# Formula's for K* and Y* steady state
+# Define exogenous variables and parameter values.
+
+K_0 = 100
+L = 1000
+A = 1
+d = 0.15
+s = .20
+alpha = 1/3
+
+# Find and print the steady state values for capital and output. 
+    # Hint1: The python function pow() can be useful when when working with powers that have fractions
+    # Hint2: To save you time, use functions that you might call upon later.
+
+#You can use a lambda function or a block function. They are the same
+
+def K_star(L, s, d, A, alpha): 
+    return (L * pow((s * A) / d, 1 / (1 - alpha)))
+
+def Y_star(L, s, d, A, alpha):
+    return pow(s / d, alpha / (1 - alpha)) * pow(A, 1 / (1 - alpha)) * L 
+
+# Print the output of your function
+    #Hint3: You can use '{:,.2f}'.format(output) to format your print output.
+    #       the comma will be the thousands separator, and .2f limits the decimals,
+    #       where f stands for the type of string output: float
+
+print('Capital steady state: ', '{:,.2f}'.format(K_star(L, s, d, A, alpha)))
+print('Output steady state: ', '{:,.2f}'.format(Y_star(L, s, d, A, alpha)))
+
+
+
+
+```
+
+
+
+
+
+
+__Part C__ (part b is missing in instructions) Now, let's simulate the path of some key variables. This exercise will help you see how the model dynamics work and illustrate how the model can generate time series that we can use to make predictions. Your goal is to create a Pandas data frame with the same structure as the table below. Start with time $t=0$ and continue until you have arrived at the steady-state within a precision of $\epsilon=10$. 
+
+Epsilon is the difference between Capital and K* or capital steady state. 
+Capital is just i-1 capital + the change in capital. 
+
+| Time, t | Capital, $K_t$ | Production, $Y_t$ | Investment, $I_t$ | Depreciation, $\bar{d}K_t$  | Change in capital, $\Delta K_{t +1}$ |
+|---------|----------------|-------------------|----------------------------|--------------------------------------|-------|
+| 0       |  100           |          NA       |              NA            |                 NA                   |   NA  |  
+| 1       |  ...           |         ...       |             ...            |                ...                   |  ...  |  
+| 2       |  ...           |         ...       |             ...            |                ...                   |  ...  |
+| 3       |  ...           |         ...       |             ...            |                ...                   |  ...  |  
+| 4       |  ...           |         ...       |             ...            |                ...                   |  ...  |  
+| 5       |  ...           |         ...       |             ...            |                ...                   |  ...  |  
+| ...     |  ...           |         ...       |             ...            |                ...                   |  ...  |  
+
+
+
+```{python}
+
+# Define exogenous variables and parameters values.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+K_0 = 100
+L = 1000 # needed to calculate output
+A = 1
+d = 0.15
+s = .20
+alpha = 1/3
+epsilon = 10
+
+def production_function(A, K, L, alpha):
+    return A * pow(K, alpha) * pow(L, 1 - alpha)
+
+
+def K_star(L, s, d, A, alpha): 
+    return (L * pow((s * A) / d, 1 / (1 - alpha)))
+
+def Y_star(L, s, d, A, alpha):
+    return pow(s / d, alpha / (1 - alpha)) * pow(A, 1 / (1 - alpha)) * L 
+
+# Defining the arrays and loop index i. There should be one index array (time),
+# an array for capital, output, investment, depreciation, and change in capital 
+# as there is in the table above.
+
+time = [0]
+capital = np.array([K_0])
+output = np.array([production_function(A, K_0, L, alpha)])
+investment = np.array([s * output[0]])
+depreciation = np.array([d * capital[0]])
+change_in_capital = np.array([investment[0] - depreciation[0]])
+i = 0
+
+# Use a while loop to run until capital is within epsilon of the steady state we calculated in part (b). 
+# Use the loop to also calculate values of all the variables required at the table. 
+capital_steady_state = K_star(L, s, d, A, alpha)
+
+while (abs(capital[i] - capital_steady_state)) >epsilon:
+    i += 1
+    time = np.append(time, i)
+    capital = np.append(capital, capital[i - 1] + change_in_capital[i - 1]) 
+    output = np.append(output, production_function(A, capital[i], L, alpha))
+    investment = np.append(investment, s * output[i])
+    depreciation = np.append(depreciation, d * capital[i])
+    change_in_capital = np.append(change_in_capital, investment[i] - depreciation[i])
+    epsilon_values = np.abs(capital - capital_steady_state)
+
+# Print the results, make sure your output is formatted and readable. See previous homework solutions for ideas.
+
+print('Reached steady state in',time[i],'time periods')
+print('Capital:', '{:,.2f}'.format(capital[i]))
+print('Output:', '{:,.2f}'.format(output[i]))
+print('Investment:', '{:,.2f}'.format( investment[i]))
+print('Depreciation: ', '{:,.2f}'.format( depreciation[i]))
+print('Change in capital: ', '{:,.2f}'.format( change_in_capital[i], '\n'))
+print('Epsilon', '{:,.2f}'.format(epsilon_values[i]))
+
+# Create a data frame with all the arrays you created in the while loop.
+# Print the data frame with the final values
+
+df = pd.DataFrame({'Time':time, 
+                   'Capital':capital, 
+                   'Output':output, 
+                   'Investment':investment, 
+                   'Depreciation':depreciation, 
+                   'Change in Capital':change_in_capital,
+                   'Epsilon':epsilon_values}, 
+                   columns=['Time', 'Capital', 'Output', 'Investment', 'Depreciation', 'Change in Capital', 'Epsilon'])
+df
+
+
+
+
+
+```
+
+
+
+
+__(d)__: Make a time series plot of investment, depreciation, and output. Start at $t=0$ and end the when you've reached the steady state.
+
+
+```{python}
+# The easiest way to create the plot is using plt.plot
+
+plt.plot(time, output, 'orange', label = 'Output')
+plt.plot(time, depreciation, 'blue', label = 'Depreciation')
+plt.plot(time, investment, 'red', label = 'Investment')
+plt.title('Solow Diagram')
+plt.xlabel('Time Period')
+plt.ylim(0, np.max(output)+50)  # Sets the range for the y axis. They depend on the value of output.
+plt.xlim(0, i)   
+plt.legend()
+plt.show()
+
+
+
+
+```
+
+
+
+
+
+__PArt E__ 
+
+What happens when you change the tolerace of the while loop, $\epsilon$?
+
+increasing $\epsilon$ makes the model reach steady state faster and vice versa.
+
+
+
+
+
+# Q2: A Decrease in the Investment Rate
+
+__Part A__
+
+Suppose the country we analyzed in the previous question enacts a tax policy that discourages investment. The policy reduces the investment rate immediately and permanently from $\bar{s}=0.2$ to $\bar{s}^{\prime}=0.1$ at $t=10$. Assuming the economy starts in its initial steady-state at $t=0$, use the Solow model to create a graph showing how output, capital, and investment evolve.
+
+
+
+```{python}
+
+# Define exogenous variables and parameters values.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+parameters = {
+    'Simulation Period (yrs)': 150,
+    'K_0': 100.0, # K_0 is 'capital' & eventually capital_steady_state
+    'L': 1000.0, # needed to calculate output
+    'A': 1.0,
+    'd': 0.15, # depreciation
+    's': 0.2,
+    'alpha': 1/3,
+    'epsilon': 10
+}
+
+quantitative_experiments = {
+    's': [
+        {'new_value': 0.1, 'time_period': 10, 'length': 140}
+    ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'Capital': [0.0] * num_periods, # K_0 & eventually capital_steady_state (K*), but K* is in its own column (K_star)
+    'Output': [0.0] * num_periods, # Y & eventually output_steady_state(Y*), but Y* is its own column
+    'Investment': [0.0] * num_periods, # will be calculated
+    'Depreciation': [0.0] * num_periods, # will be calculated
+    'Change in Capital': [0.0] * num_periods, # will be calculated
+    'Epsilon': [0.0] * num_periods, # will be calculated 
+    's': [parameters['s']] * num_periods,
+    'd': [parameters['d']] * num_periods,
+    'A': [parameters['A']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'L': [parameters['L']] * num_periods,
+    'K_star': [0.0] * num_periods, # will be calculated
+    'Y_star': [0.0] * num_periods
+})
+
+# Apply Quantitative Experiments
+
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+ # done
+
+
+def production_function(df, row_index, A, K_0, L, alpha): # 'output' # Y
+    if row_index == 0:
+      Output = A * K_0 ** alpha * L ** (1 - alpha)
+    else:
+      Output =  df.at[row_index, 'A'] * df.at[row_index, 'Capital'] ** df.at[row_index, 'alpha'] * df.at[row_index, 'L'] ** (1 - df.at[row_index, 'alpha']) # formula
+    return Output
+
+
+
+def calc_K_star(df, row_index, L, s, d, A, alpha): # capital_steady_state
+    '''This is to calculat capital_steady_state and is use to find epsilon by doing: 'Capital' - capital_steady_state. Which capital steady state is K_star
+    now the question if this calculation is calculated only once or at every row. I'm assuming is every row, but research shows it is only once
+    Ok i may have to remove this from the df, or keep it and add a constant K_star.
+    It is calculated every period due to the quantitative experiment where s can change so that changes capital steady state. '''
+    if row_index == 0:
+      K_star = L * ((s * A)/d) ** (1.0/(1.0 - alpha))
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      K_star =  L * ((s * A)/d) ** (1.0/(1.0 - alpha)) # formula
+    return K_star
+
+
+
+
+def calc_Y_star(df, row_index, L, s, d, A, alpha):
+    if row_index == 0:
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L # formula
+    return Y_star
+
+
+# 
+def calc_Capital(df, row_index, K_0): # capital initial, we get epsilon by getting this K_0 or 'Capital'minus capital_steay_state
+     if row_index == 0:
+         return K_0
+     else:
+       Capital = df.at[row_index - 1, 'Capital'] + df.at[row_index - 1, 'Change in Capital']
+     return  Capital
+
+
+def calc_Investment(df, row_index):
+    s = df.at[row_index, 's']
+    Output = df.at[row_index, 'Output']
+    Investment = s * Output
+    return Investment
+
+def calc_Depreciation(df, row_index):
+    d = df.at[row_index, 'd']
+    Capital = df.at[row_index, 'Capital']
+    Depreciation = d * Capital
+    return Depreciation
+
+def calc_change_in_Capital(df, row_index):
+    investment = df.at[row_index, 'Investment']
+    Depreciation = df.at[row_index, 'Depreciation']
+    Change_in_Capital = investment - Depreciation
+    return Change_in_Capital
+
+def calc_epsilon_value(df, row_index):
+    capital = df.at[row_index, 'Capital']
+    capital_steady_state = df.at[row_index, 'K_star']
+    Epsilon = abs(capital - capital_steady_state)
+    return Epsilon
+
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    # Existing calculations
+    df.at[i, 'Capital'] = calc_Capital(df, i, parameters['K_0'])
+    df.at[i, 'Output'] = production_function(df, i, parameters['A'], parameters['K_0'], parameters['L'], parameters['alpha'])
+    df.at[i, 'K_star'] = calc_K_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Y_star'] = calc_Y_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Investment'] = calc_Investment(df, i)
+    df.at[i, 'Depreciation'] = calc_Depreciation(df, i)
+    df.at[i, 'Change in Capital'] = calc_change_in_Capital(df, i)
+    df.at[i, 'Epsilon'] = calc_epsilon_value(df, i)
+
+    # New stopping condition
+    if df.at[i, 'Epsilon'] < parameters['epsilon']:
+        print('Stopping condition met at period:', i)
+        print('Capital:', '{:,.2f}'.format(df.at[i, 'Capital']))
+        print('Output:', '{:,.2f}'.format(df.at[i, 'Output']))
+        print('Investment:', '{:,.2f}'.format(df.at[i, 'Investment']))
+        print('Depreciation: ', '{:,.2f}'.format(df.at[i, 'Depreciation']))
+        print('Change in capital: ', '{:,.2f}'.format(df.at[i, 'Change in Capital']))
+        print('Epsilon', '{:,.2f}'.format(df.at[i, 'Epsilon']))
+        df = df[:i+1]
+        # display(df) # uncheck or check for df
+        break  # Exit the loop
+
+```
+
+__made into def function for easy recall elsewhere.__
+
+```{python}
+
+import matplotlib.pyplot as plt
+
+def plot_variables(df, variables, xlabel='Period', ylabel='Values'):
+    """
+    Plots specified variables from a DataFrame against the 'Period' column.
+
+    :param df: DataFrame containing the data.
+    :param variables: List of column names in df to be plotted.
+    :param xlabel: Label for the x-axis (string).
+    :param ylabel: Label for the y-axis (string).
+    """
+    for var in variables:
+        if var in df.columns:
+            plt.plot(df['Period'], df[var], label=var)
+        else:
+            print(f"Warning: {var} not found in DataFrame")
+
+    title = f"Time Series Plot of {', '.join(variables)}"
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(0, df['Period'].iloc[-1])    # Set range x-axis to last period
+    plt.ylim(0, max(df[variables].max()) + 50)  # Adjust y-axis limit based on max value of specified variables
+    plt.legend()
+    plt.show()
+
+# List of variables
+variables_to_plot = ['Output', 'Depreciation', 'Investment', 'Capital']
+
+# Calling the function with the DataFrame
+plot_variables(df, variables_to_plot)
+
+
+```
+
+
+
+
+# Q3: Technology Transfer in the Solow Growth Model
+
+One explanation for China's rapid economic growth during the past several decades is its expansion of policies that encourage "technology transfer." By this, we mean policies—such as opening up to international trade and attracting multinational corporations through various incentives—that promote the use and adoption of new ideas and new technologies in China. 
+
+This question asks you to use the Solow model to study this scenario. Suppose China begins in the steady-state. Then, to keep the problem simple, let's assume the sole result of these technology transfer policies is to increase TFP from $\bar{A}=1$ to $\bar{A}=2$ permanently. 
+
+
+
+__Part A & B__: Create a graph using Python, showing what happens to output in China over time. Yes, use the parameters and variable values from Q1) as as your starting point.  What happens to output per person in China in the long run? Pease use 10 periods of steady state values before the change in $\bar{A}$ goes into effect.
+
+__It takes 51 periods for China to reach steady state values so I will ennact the change to $\bar{A}$ in period 61. The permanant change to $\bar{A}$ will result in China not hitting steady state till the period 117, given they first hit steady state in period 51, and the change in $\bar{A}$ in period 61.__ 
+
+__It is lamost 60 years for china to hit steady state after the change in $\bar{A}$. Assuming China did not start with this changes in technological growth  till the mid to late 1970s then it will mean China is getting close to hitting steady state. This correlatas with current day China as they sort of hit a stop in their crazy growth and economic growth. This is up for debate as I'm not 100% sure that steady state resembles no more crazy economic growth but steady state is basically when things run as normal, and improvements in technoly or increase in Invesment will cause China to not be at steady state. 
+
+```{python}
+# this code is same as above but two new things
+# uses the def functions from macrofunctions1 to save space
+# adds a new stopping condition to check for parameters to be ran b/ epsiolon check
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def production_function(df, row_index, A, K_0, L, alpha): # 'output'
+    if row_index == 0:
+      Output = A * K_0 ** alpha * L ** (1 - alpha)
+    else:
+      Output =  df.at[row_index, 'A'] * df.at[row_index, 'Capital'] ** df.at[row_index, 'alpha'] * df.at[row_index, 'L'] ** (1 - df.at[row_index, 'alpha']) # formula 
+    return Output
+
+def calc_K_star(df, row_index, L, s, d, A, alpha): # capital_steady_state
+    '''This is to calculat capital_steady_state and is use to find epsilon by doing: 'Capital' - capital_steady_state. Which capital steady state is K_star
+    now the question if this calculation is calculated only once or at every row. I'm assuming is every row, but research shows it is only once
+    Ok i may have to remove this from the df, or keep it and add a constant K_star.
+    It is calculated every period due to the quantitative experiment where s can change so that changes capital steady state. '''
+    if row_index == 0:
+      K_star = L * ((s * A)/d) ** (1.0/(1.0 - alpha))
+    else: 
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      K_star =  L * ((s * A)/d) ** (1.0/(1.0 - alpha)) # formula
+    return K_star
+
+def calc_Y_star(df, row_index, L, s, d, A, alpha):
+    if row_index == 0:
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L # formula
+    return Y_star
+
+def calc_Capital(df, row_index, K_0): # capital initial, we get epsilon by getting this K_0 or 'Capital'minus capital_steay_state
+    if row_index == 0:
+        return K_0
+    else:
+      Capital = df.at[row_index - 1, 'Capital'] + df.at[row_index - 1, 'Change in Capital']
+    return  Capital
+
+
+def calc_Investment(df, row_index):
+    s = df.at[row_index, 's']
+    Output = df.at[row_index, 'Output']
+    Investment = s * Output
+    return Investment
+
+def calc_Depreciation(df, row_index):
+    d = df.at[row_index, 'd']
+    Capital = df.at[row_index, 'Capital']
+    Depreciation = d * Capital
+    return Depreciation
+
+def calc_change_in_Capital(df, row_index):
+    investment = df.at[row_index, 'Investment']
+    Depreciation = df.at[row_index, 'Depreciation']
+    Change_in_Capital = investment - Depreciation
+    return Change_in_Capital
+
+def calc_epsilon_value(df, row_index):
+    capital = df.at[row_index, 'Capital']
+    capital_steady_state = df.at[row_index, 'K_star']
+    Epsilon = abs(capital - capital_steady_state)
+    return Epsilon
+
+
+def plot_variables(df, variables, xlabel='Period', ylabel='Values'):
+    """
+    # plot for Solow Questions
+    # it plots all in one graph
+    :param df: DataFrame containing the data.
+    :param variables: List of column names in df to be plotted.
+    :param xlabel: Label for the x-axis (string).
+    :param ylabel: Label for the y-axis (string).
+    """
+    for var in variables:
+        if var in df.columns:
+            plt.plot(df['Period'], df[var], label=var)
+        else:
+            print(f"Warning: {var} not found in DataFrame")
+
+    title = f"Time Series Plot of {', '.join(variables)}"
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(0, df['Period'].iloc[-1])    # Set range x-axis to last period
+    plt.ylim(0, max(df[variables].max()) + 50)  # Adjust y-axis limit based on max value of specified variables
+    plt.legend()
+    plt.show()
+
+
+
+
+
+parameters = {
+    'Simulation Period (yrs)': 150,
+    'K_0': 100.0, # K_0 is 'capital' & eventually capital_steady_state
+    'L': 1000.0, # needed to calculate output
+    'A': 1.0,
+    'd': 0.15, # depreciation
+    's': 0.2,
+    'alpha': 1/3,
+    'epsilon': 10
+}
+
+quantitative_experiments = {
+    'A': [
+        {'new_value': 2, 'time_period': 61, 'length': 150}
+    ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'Capital': [0.0] * num_periods, # K_0 & eventually capital_steady_state (K*), but K* is in its own column (K_star)
+    'Output': [0.0] * num_periods, # Y & eventually output_steady_state(Y*), but Y* is its own column
+    'Investment': [0.0] * num_periods, # will be calculated
+    'Depreciation': [0.0] * num_periods, # will be calculated
+    'Change in Capital': [0.0] * num_periods, # will be calculated
+    'Epsilon': [0.0] * num_periods, # will be calculated 
+    's': [parameters['s']] * num_periods,
+    'd': [parameters['d']] * num_periods,
+    'A': [parameters['A']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'L': [parameters['L']] * num_periods,
+    'K_star': [0.0] * num_periods, # will be calculated
+    'Y_star': [0.0] * num_periods
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# To run all quantitative experiments b/ checking for epsilon
+experiments_initiated  = False
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    # Existing calculations
+    df.at[i, 'Capital'] = calc_Capital(df, i, parameters['K_0'])
+    df.at[i, 'Output'] = production_function(df, i, parameters['A'], parameters['K_0'], parameters['L'], parameters['alpha'])
+    df.at[i, 'K_star'] = calc_K_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Y_star'] = calc_Y_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Investment'] = calc_Investment(df, i)
+    df.at[i, 'Depreciation'] = calc_Depreciation(df, i)
+    df.at[i, 'Change in Capital'] = calc_change_in_Capital(df, i)
+    df.at[i, 'Epsilon'] = calc_epsilon_value(df, i)
+
+    # run all quantitative experiments b/ checking for epsilon. Note: this code only checks for ran, not if the lenght is complete. 
+    if not experiments_initiated:
+        latest_start_time = max(exp['time_period'] for exp_list in quantitative_experiments.values() for exp in exp_list)
+        if i >= latest_start_time:
+            experiments_initiated = True
+
+    # stopping conditions for eprsilon & checks for all quant exp. ran.
+    if df.at[i, 'Epsilon'] < parameters['epsilon'] and experiments_initiated:
+        print('Stopping condition met at period:', i)
+        print('Capital:', '{:,.2f}'.format(df.at[i, 'Capital']))
+        print('Output:', '{:,.2f}'.format(df.at[i, 'Output']))
+        print('Investment:', '{:,.2f}'.format(df.at[i, 'Investment']))
+        print('Depreciation: ', '{:,.2f}'.format(df.at[i, 'Depreciation']))
+        print('Change in capital: ', '{:,.2f}'.format(df.at[i, 'Change in Capital']))
+        print('Epsilon', '{:,.2f}'.format(df.at[i, 'Epsilon']))
+        df = df[:i+1]
+        # display(df) # uncheck or check for df
+        break  # Exit the loop
+
+# Plot sample usage form Solow python project. 
+variables_to_plot = ['Output', 'Capital', 'Depreciation', 'Investment']
+plot_variables(df, variables_to_plot)
+
+```
+
+
+
+# Q4: Foreign Aid
+
+After a disastrous encounter with Covid-19, Ethiopia receives a sizeable foreign aid package. Assume the aid doubles Ethiopia's current capital stock at $t=10$ . There is no change in parameters. Illustrate what happens to the economy, both immediately and over time.
+
+
+__Part A:__ Suppose that the country finds itself on its steady state until $t=10$, when they receive the gift. Use the parameters and variable values from Q1) as as your starting point. Use the Solow model to create a graph showing how output, capital, and investment evolve over time.
+
+__Part B__: By what proportion does consumption per person initially increase? What happens to consumption in the long run?
+
+__Ethiopia Under Normal Conditions starting from period 10__
+```{python}
+# this code is same as above but two new things
+# uses the def functions from macrofunctions1 to save space
+# adds a new stopping condition to check for parameters to be ran b/ epsiolon check
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def production_function(df, row_index, A, K_0, L, alpha): # 'output'
+    if row_index == 0:
+      Output = A * K_0 ** alpha * L ** (1 - alpha)
+    else:
+      Output =  df.at[row_index, 'A'] * df.at[row_index, 'Capital'] ** df.at[row_index, 'alpha'] * df.at[row_index, 'L'] ** (1 - df.at[row_index, 'alpha']) # formula 
+    return Output
+
+def calc_K_star(df, row_index, L, s, d, A, alpha): # capital_steady_state
+    '''This is to calculat capital_steady_state and is use to find epsilon by doing: 'Capital' - capital_steady_state. Which capital steady state is K_star
+    now the question if this calculation is calculated only once or at every row. I'm assuming is every row, but research shows it is only once
+    Ok i may have to remove this from the df, or keep it and add a constant K_star.
+    It is calculated every period due to the quantitative experiment where s can change so that changes capital steady state. '''
+    if row_index == 0:
+      K_star = L * ((s * A)/d) ** (1.0/(1.0 - alpha))
+    else: 
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      K_star =  L * ((s * A)/d) ** (1.0/(1.0 - alpha)) # formula
+    return K_star
+
+def calc_Y_star(df, row_index, L, s, d, A, alpha):
+    if row_index == 0:
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L # formula
+    return Y_star
+
+def calc_Capital(df, row_index, K_0): # capital initial, we get epsilon by getting this K_0 or 'Capital'minus capital_steay_state
+    if row_index == 0:
+        return K_0
+    else:
+      Capital = df.at[row_index - 1, 'Capital'] + df.at[row_index - 1, 'Change in Capital']
+    return  Capital
+
+
+def calc_Investment(df, row_index):
+    s = df.at[row_index, 's']
+    Output = df.at[row_index, 'Output']
+    Investment = s * Output
+    return Investment
+
+def calc_Depreciation(df, row_index):
+    d = df.at[row_index, 'd']
+    Capital = df.at[row_index, 'Capital']
+    Depreciation = d * Capital
+    return Depreciation
+
+def calc_change_in_Capital(df, row_index):
+    investment = df.at[row_index, 'Investment']
+    Depreciation = df.at[row_index, 'Depreciation']
+    Change_in_Capital = investment - Depreciation
+    return Change_in_Capital
+
+def calc_epsilon_value(df, row_index):
+    capital = df.at[row_index, 'Capital']
+    capital_steady_state = df.at[row_index, 'K_star']
+    Epsilon = abs(capital - capital_steady_state)
+    return Epsilon
+
+
+def plot_variables(df, variables, xlabel='Period', ylabel='Values'):
+    """
+    # plot for Solow Questions
+    # it plots all in one graph
+    :param df: DataFrame containing the data.
+    :param variables: List of column names in df to be plotted.
+    :param xlabel: Label for the x-axis (string).
+    :param ylabel: Label for the y-axis (string).
+    """
+    for var in variables:
+        if var in df.columns:
+            plt.plot(df['Period'], df[var], label=var)
+        else:
+            print(f"Warning: {var} not found in DataFrame")
+
+    title = f"Time Series Plot of {', '.join(variables)}"
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(0, df['Period'].iloc[-1])    # Set range x-axis to last period
+    plt.ylim(0, max(df[variables].max()) + 50)  # Adjust y-axis limit based on max value of specified variables
+    plt.legend()
+    plt.show()
+
+
+parameters = {
+    'Simulation Period (yrs)': 150,
+    'K_0': 892.840251, # K_0 is 'capital' & eventually capital_steady_state
+    'L': 1000.0, # needed to calculate output
+    'A': 1.0,
+    'd': 0.15, # depreciation
+    's': 0.2,
+    'alpha': 1/3,
+    'epsilon': 10
+}
+
+quantitative_experiments = {
+    'A': [
+        {'new_value': 1.0, 'time_period': 1, 'length': 1}
+    ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'Capital': [0.0] * num_periods, # K_0 & eventually capital_steady_state (K*), but K* is in its own column (K_star)
+    'Output': [0.0] * num_periods, # Y & eventually output_steady_state(Y*), but Y* is its own column
+    'Investment': [0.0] * num_periods, # will be calculated
+    'Depreciation': [0.0] * num_periods, # will be calculated
+    'Change in Capital': [0.0] * num_periods, # will be calculated
+    'Epsilon': [0.0] * num_periods, # will be calculated 
+    's': [parameters['s']] * num_periods,
+    'd': [parameters['d']] * num_periods,
+    'A': [parameters['A']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'L': [parameters['L']] * num_periods,
+    'K_star': [0.0] * num_periods, # will be calculated
+    'Y_star': [0.0] * num_periods
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# To run all quantitative experiments b/ checking for epsilon
+experiments_initiated  = False
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    # Existing calculations
+    df.at[i, 'Capital'] = calc_Capital(df, i, parameters['K_0'])
+    df.at[i, 'Output'] = production_function(df, i, parameters['A'], parameters['K_0'], parameters['L'], parameters['alpha'])
+    df.at[i, 'K_star'] = calc_K_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Y_star'] = calc_Y_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Investment'] = calc_Investment(df, i)
+    df.at[i, 'Depreciation'] = calc_Depreciation(df, i)
+    df.at[i, 'Change in Capital'] = calc_change_in_Capital(df, i)
+    df.at[i, 'Epsilon'] = calc_epsilon_value(df, i)
+
+    # run all quantitative experiments b/ checking for epsilon. Note: this code only checks for ran, not if the lenght is complete. 
+    if not experiments_initiated:
+        latest_start_time = max(exp['time_period'] for exp_list in quantitative_experiments.values() for exp in exp_list)
+        if i >= latest_start_time:
+            experiments_initiated = True
+
+    # stopping conditions for eprsilon & checks for all quant exp. ran.
+    if df.at[i, 'Epsilon'] < parameters['epsilon'] and experiments_initiated:
+        print('Stopping condition met at period:', i)
+        print('Capital:', '{:,.2f}'.format(df.at[i, 'Capital']))
+        print('Output:', '{:,.2f}'.format(df.at[i, 'Output']))
+        print('Investment:', '{:,.2f}'.format(df.at[i, 'Investment']))
+        print('Depreciation: ', '{:,.2f}'.format(df.at[i, 'Depreciation']))
+        print('Change in capital: ', '{:,.2f}'.format(df.at[i, 'Change in Capital']))
+        print('Epsilon', '{:,.2f}'.format(df.at[i, 'Epsilon']))
+        df = df[:i+1]
+        # display(df) # uncheck or check for df
+        break  # Exit the loop
+
+# Plot sample usage form Solow python project. 
+variables_to_plot = ['Output', 'Capital', 'Depreciation', 'Investment']
+plot_variables(df, variables_to_plot)
+
+```
+
+
+__Ethiopia with the application of the gift in period 10__
+
+Period 10 is period zero in this graphs
+__this is not ideal because the effects of the double capital stock is not shown in  the graphs so I need to find a way to edit the value of the calculations as well__
+```{python}
+# this code is same as above but two new things
+# uses the def functions from macrofunctions1 to save space
+# adds a new stopping condition to check for parameters to be ran b/ epsiolon check
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def production_function(df, row_index, A, K_0, L, alpha): # 'output'
+    if row_index == 0:
+      Output = A * K_0 ** alpha * L ** (1 - alpha)
+    else:
+      Output =  df.at[row_index, 'A'] * df.at[row_index, 'Capital'] ** df.at[row_index, 'alpha'] * df.at[row_index, 'L'] ** (1 - df.at[row_index, 'alpha']) # formula 
+    return Output
+
+def calc_K_star(df, row_index, L, s, d, A, alpha): # capital_steady_state
+    '''This is to calculat capital_steady_state and is use to find epsilon by doing: 'Capital' - capital_steady_state. Which capital steady state is K_star
+    now the question if this calculation is calculated only once or at every row. I'm assuming is every row, but research shows it is only once
+    Ok i may have to remove this from the df, or keep it and add a constant K_star.
+    It is calculated every period due to the quantitative experiment where s can change so that changes capital steady state. '''
+    if row_index == 0:
+      K_star = L * ((s * A)/d) ** (1.0/(1.0 - alpha))
+    else: 
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      K_star =  L * ((s * A)/d) ** (1.0/(1.0 - alpha)) # formula
+    return K_star
+
+def calc_Y_star(df, row_index, L, s, d, A, alpha):
+    if row_index == 0:
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L # formula
+    return Y_star
+
+def calc_Capital(df, row_index, K_0): # capital initial, we get epsilon by getting this K_0 or 'Capital'minus capital_steay_state
+    if row_index == 0:
+        return K_0
+    else:
+      Capital = df.at[row_index - 1, 'Capital'] + df.at[row_index - 1, 'Change in Capital']
+    return  Capital
+
+
+def calc_Investment(df, row_index):
+    s = df.at[row_index, 's']
+    Output = df.at[row_index, 'Output']
+    Investment = s * Output
+    return Investment
+
+def calc_Depreciation(df, row_index):
+    d = df.at[row_index, 'd']
+    Capital = df.at[row_index, 'Capital']
+    Depreciation = d * Capital
+    return Depreciation
+
+def calc_change_in_Capital(df, row_index):
+    investment = df.at[row_index, 'Investment']
+    Depreciation = df.at[row_index, 'Depreciation']
+    Change_in_Capital = investment - Depreciation
+    return Change_in_Capital
+
+def calc_epsilon_value(df, row_index):
+    capital = df.at[row_index, 'Capital']
+    capital_steady_state = df.at[row_index, 'K_star']
+    Epsilon = abs(capital - capital_steady_state)
+    return Epsilon
+
+
+def plot_variables(df, variables, xlabel='Period', ylabel='Values'):
+    """
+    # plot for Solow Questions
+    # it plots all in one graph
+    :param df: DataFrame containing the data.
+    :param variables: List of column names in df to be plotted.
+    :param xlabel: Label for the x-axis (string).
+    :param ylabel: Label for the y-axis (string).
+    """
+    for var in variables:
+        if var in df.columns:
+            plt.plot(df['Period'], df[var], label=var)
+        else:
+            print(f"Warning: {var} not found in DataFrame")
+
+    title = f"Time Series Plot of {', '.join(variables)}"
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(0, df['Period'].iloc[-1])    # Set range x-axis to last period
+    plt.ylim(0, max(df[variables].max()) + 50)  # Adjust y-axis limit based on max value of specified variables
+    plt.legend()
+    plt.show()
+
+
+parameters = {
+    'Simulation Period (yrs)': 150,
+    'K_0': 1785.680502, # K_0 is 'capital' & eventually capital_steady_state
+    'L': 1000.0, # needed to calculate output
+    'A': 1.0,
+    'd': 0.15, # depreciation
+    's': 0.2,
+    'alpha': 1/3,
+    'epsilon': 10
+}
+
+quantitative_experiments = {
+    'Capital': [
+        {'new_value': 5000, 'time_period': 10, 'length': 150}
+    ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'Capital': [0.0] * num_periods, # K_0 & eventually capital_steady_state (K*), but K* is in its own column (K_star)
+    'Output': [0.0] * num_periods, # Y & eventually output_steady_state(Y*), but Y* is its own column
+    'Investment': [0.0] * num_periods, # will be calculated
+    'Depreciation': [0.0] * num_periods, # will be calculated
+    'Change in Capital': [0.0] * num_periods, # will be calculated
+    'Epsilon': [0.0] * num_periods, # will be calculated 
+    's': [parameters['s']] * num_periods,
+    'd': [parameters['d']] * num_periods,
+    'A': [parameters['A']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'L': [parameters['L']] * num_periods,
+    'K_star': [0.0] * num_periods, # will be calculated
+    'Y_star': [0.0] * num_periods
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# To run all quantitative experiments b/ checking for epsilon
+experiments_initiated  = False
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    # Existing calculations
+    df.at[i, 'Capital'] = calc_Capital(df, i, parameters['K_0'])
+    df.at[i, 'Output'] = production_function(df, i, parameters['A'], parameters['K_0'], parameters['L'], parameters['alpha'])
+    df.at[i, 'K_star'] = calc_K_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Y_star'] = calc_Y_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Investment'] = calc_Investment(df, i)
+    df.at[i, 'Depreciation'] = calc_Depreciation(df, i)
+    df.at[i, 'Change in Capital'] = calc_change_in_Capital(df, i)
+    df.at[i, 'Epsilon'] = calc_epsilon_value(df, i)
+
+    # run all quantitative experiments b/ checking for epsilon. Note: this code only checks for ran, not if the lenght is complete. 
+    if not experiments_initiated:
+        latest_start_time = max(exp['time_period'] for exp_list in quantitative_experiments.values() for exp in exp_list)
+        if i >= latest_start_time:
+            experiments_initiated = True
+
+    # stopping conditions for eprsilon & checks for all quant exp. ran.
+    if df.at[i, 'Epsilon'] < parameters['epsilon'] and experiments_initiated:
+        print('Stopping condition met at period:', i)
+        print('Capital:', '{:,.2f}'.format(df.at[i, 'Capital']))
+        print('Output:', '{:,.2f}'.format(df.at[i, 'Output']))
+        print('Investment:', '{:,.2f}'.format(df.at[i, 'Investment']))
+        print('Depreciation: ', '{:,.2f}'.format(df.at[i, 'Depreciation']))
+        print('Change in capital: ', '{:,.2f}'.format(df.at[i, 'Change in Capital']))
+        print('Epsilon', '{:,.2f}'.format(df.at[i, 'Epsilon']))
+        df = df[:i+1]
+        # display(df) # uncheck or check for df
+        break  # Exit the loop
+
+# Plot sample usage form Solow python project. 
+variables_to_plot = ['Output', 'Capital', 'Depreciation', 'Investment']
+plot_variables(df, variables_to_plot)
+
+```
+
+
+Explain: 
+This shows that doubling Ethiopia's capital stock was not the smartest idea due to other economic indicators not being up to par with double capital stock, for example ethiopias population and technology still remain the same so much of the new capital was not use to its potential or not used at all. In the plot showing Ethiopia after the change, shows Capital on a downward trend and so is output but it is almost a flat line. Depreciation is above invesments. 
+
+
+
+
+__Parrt C__: Suppose instead of starting in its steady state, the economy begins below its steady state, with a capital stock equal to $K_{0}=50$. Answer the same questions as part (a) for this case.
+
+
+
+__Ethiopia Under Normal Conditions starting from period 10__
+```{python}
+# this code is same as above but two new things
+# uses the def functions from macrofunctions1 to save space
+# adds a new stopping condition to check for parameters to be ran b/ epsiolon check
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def production_function(df, row_index, A, K_0, L, alpha): # 'output'
+    if row_index == 0:
+      Output = A * K_0 ** alpha * L ** (1 - alpha)
+    else:
+      Output =  df.at[row_index, 'A'] * df.at[row_index, 'Capital'] ** df.at[row_index, 'alpha'] * df.at[row_index, 'L'] ** (1 - df.at[row_index, 'alpha']) # formula 
+    return Output
+
+def calc_K_star(df, row_index, L, s, d, A, alpha): # capital_steady_state
+    '''This is to calculat capital_steady_state and is use to find epsilon by doing: 'Capital' - capital_steady_state. Which capital steady state is K_star
+    now the question if this calculation is calculated only once or at every row. I'm assuming is every row, but research shows it is only once
+    Ok i may have to remove this from the df, or keep it and add a constant K_star.
+    It is calculated every period due to the quantitative experiment where s can change so that changes capital steady state. '''
+    if row_index == 0:
+      K_star = L * ((s * A)/d) ** (1.0/(1.0 - alpha))
+    else: 
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      K_star =  L * ((s * A)/d) ** (1.0/(1.0 - alpha)) # formula
+    return K_star
+
+def calc_Y_star(df, row_index, L, s, d, A, alpha):
+    if row_index == 0:
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L # formula
+    return Y_star
+
+def calc_Capital(df, row_index, K_0): # capital initial, we get epsilon by getting this K_0 or 'Capital'minus capital_steay_state
+    if row_index == 0:
+        return K_0
+    else:
+      Capital = df.at[row_index - 1, 'Capital'] + df.at[row_index - 1, 'Change in Capital']
+    return  Capital
+
+
+def calc_Investment(df, row_index):
+    s = df.at[row_index, 's']
+    Output = df.at[row_index, 'Output']
+    Investment = s * Output
+    return Investment
+
+def calc_Depreciation(df, row_index):
+    d = df.at[row_index, 'd']
+    Capital = df.at[row_index, 'Capital']
+    Depreciation = d * Capital
+    return Depreciation
+
+def calc_change_in_Capital(df, row_index):
+    investment = df.at[row_index, 'Investment']
+    Depreciation = df.at[row_index, 'Depreciation']
+    Change_in_Capital = investment - Depreciation
+    return Change_in_Capital
+
+def calc_epsilon_value(df, row_index):
+    capital = df.at[row_index, 'Capital']
+    capital_steady_state = df.at[row_index, 'K_star']
+    Epsilon = abs(capital - capital_steady_state)
+    return Epsilon
+
+
+def plot_variables(df, variables, xlabel='Period', ylabel='Values'):
+    """
+    # plot for Solow Questions
+    # it plots all in one graph
+    :param df: DataFrame containing the data.
+    :param variables: List of column names in df to be plotted.
+    :param xlabel: Label for the x-axis (string).
+    :param ylabel: Label for the y-axis (string).
+    """
+    for var in variables:
+        if var in df.columns:
+            plt.plot(df['Period'], df[var], label=var)
+        else:
+            print(f"Warning: {var} not found in DataFrame")
+
+    title = f"Time Series Plot of {', '.join(variables)}"
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(0, df['Period'].iloc[-1])    # Set range x-axis to last period
+    plt.ylim(0, max(df[variables].max()) + 50)  # Adjust y-axis limit based on max value of specified variables
+    plt.legend()
+    plt.show()
+
+
+parameters = {
+    'Simulation Period (yrs)': 150,
+    'K_0': 50.0, # K_0 is 'capital' & eventually capital_steady_state
+    'L': 1000.0, # needed to calculate output
+    'A': 1.0,
+    'd': 0.15, # depreciation
+    's': 0.2,
+    'alpha': 1/3,
+    'epsilon': 10
+}
+
+quantitative_experiments = {
+    'A': [
+        {'new_value': 1.0, 'time_period': 1, 'length': 1}
+    ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'Capital': [0.0] * num_periods, # K_0 & eventually capital_steady_state (K*), but K* is in its own column (K_star)
+    'Output': [0.0] * num_periods, # Y & eventually output_steady_state(Y*), but Y* is its own column
+    'Investment': [0.0] * num_periods, # will be calculated
+    'Depreciation': [0.0] * num_periods, # will be calculated
+    'Change in Capital': [0.0] * num_periods, # will be calculated
+    'Epsilon': [0.0] * num_periods, # will be calculated 
+    's': [parameters['s']] * num_periods,
+    'd': [parameters['d']] * num_periods,
+    'A': [parameters['A']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'L': [parameters['L']] * num_periods,
+    'K_star': [0.0] * num_periods, # will be calculated
+    'Y_star': [0.0] * num_periods
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# To run all quantitative experiments b/ checking for epsilon
+experiments_initiated  = False
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    # Existing calculations
+    df.at[i, 'Capital'] = calc_Capital(df, i, parameters['K_0'])
+    df.at[i, 'Output'] = production_function(df, i, parameters['A'], parameters['K_0'], parameters['L'], parameters['alpha'])
+    df.at[i, 'K_star'] = calc_K_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Y_star'] = calc_Y_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Investment'] = calc_Investment(df, i)
+    df.at[i, 'Depreciation'] = calc_Depreciation(df, i)
+    df.at[i, 'Change in Capital'] = calc_change_in_Capital(df, i)
+    df.at[i, 'Epsilon'] = calc_epsilon_value(df, i)
+
+    # run all quantitative experiments b/ checking for epsilon. Note: this code only checks for ran, not if the lenght is complete. 
+    if not experiments_initiated:
+        latest_start_time = max(exp['time_period'] for exp_list in quantitative_experiments.values() for exp in exp_list)
+        if i >= latest_start_time:
+            experiments_initiated = True
+
+    # stopping conditions for eprsilon & checks for all quant exp. ran.
+    if df.at[i, 'Epsilon'] < parameters['epsilon'] and experiments_initiated:
+        print('Stopping condition met at period:', i)
+        print('Capital:', '{:,.2f}'.format(df.at[i, 'Capital']))
+        print('Output:', '{:,.2f}'.format(df.at[i, 'Output']))
+        print('Investment:', '{:,.2f}'.format(df.at[i, 'Investment']))
+        print('Depreciation: ', '{:,.2f}'.format(df.at[i, 'Depreciation']))
+        print('Change in capital: ', '{:,.2f}'.format(df.at[i, 'Change in Capital']))
+        print('Epsilon', '{:,.2f}'.format(df.at[i, 'Epsilon']))
+        df = df[:i+1]
+        display(df) # uncheck or check for df
+        break  # Exit the loop
+
+# Plot sample usage form Solow python project. 
+# variables_to_plot = ['Output', 'Capital', 'Depreciation', 'Investment']
+# plot_variables(df, variables_to_plot)
+
+```
+
+
+__Ethiopia Under Normal Conditions starting from period 10__
+```{python}
+# this code is same as above but two new things
+# uses the def functions from macrofunctions1 to save space
+# adds a new stopping condition to check for parameters to be ran b/ epsiolon check
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def production_function(df, row_index, A, K_0, L, alpha): # 'output'
+    if row_index == 0:
+      Output = A * K_0 ** alpha * L ** (1 - alpha)
+    else:
+      Output =  df.at[row_index, 'A'] * df.at[row_index, 'Capital'] ** df.at[row_index, 'alpha'] * df.at[row_index, 'L'] ** (1 - df.at[row_index, 'alpha']) # formula 
+    return Output
+
+def calc_K_star(df, row_index, L, s, d, A, alpha): # capital_steady_state
+    '''This is to calculat capital_steady_state and is use to find epsilon by doing: 'Capital' - capital_steady_state. Which capital steady state is K_star
+    now the question if this calculation is calculated only once or at every row. I'm assuming is every row, but research shows it is only once
+    Ok i may have to remove this from the df, or keep it and add a constant K_star.
+    It is calculated every period due to the quantitative experiment where s can change so that changes capital steady state. '''
+    if row_index == 0:
+      K_star = L * ((s * A)/d) ** (1.0/(1.0 - alpha))
+    else: 
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      K_star =  L * ((s * A)/d) ** (1.0/(1.0 - alpha)) # formula
+    return K_star
+
+def calc_Y_star(df, row_index, L, s, d, A, alpha):
+    if row_index == 0:
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L
+    else:
+      A = df.at[row_index, 'A']
+      s = df.at[row_index, 's']
+      L = df.at[row_index, 'L']
+      d = df.at[row_index, 'd']
+      alpha = df.at[row_index, 'alpha']
+      Y_star = A ** (1.0/(1.0 - alpha)) * (s/d) ** (alpha/ (1.0 - alpha)) * L # formula
+    return Y_star
+
+def calc_Capital(df, row_index, K_0): # capital initial, we get epsilon by getting this K_0 or 'Capital'minus capital_steay_state
+    if row_index == 0:
+        return K_0
+    else:
+      Capital = df.at[row_index - 1, 'Capital'] + df.at[row_index - 1, 'Change in Capital']
+    return  Capital
+
+
+def calc_Investment(df, row_index):
+    s = df.at[row_index, 's']
+    Output = df.at[row_index, 'Output']
+    Investment = s * Output
+    return Investment
+
+def calc_Depreciation(df, row_index):
+    d = df.at[row_index, 'd']
+    Capital = df.at[row_index, 'Capital']
+    Depreciation = d * Capital
+    return Depreciation
+
+def calc_change_in_Capital(df, row_index):
+    investment = df.at[row_index, 'Investment']
+    Depreciation = df.at[row_index, 'Depreciation']
+    Change_in_Capital = investment - Depreciation
+    return Change_in_Capital
+
+def calc_epsilon_value(df, row_index):
+    capital = df.at[row_index, 'Capital']
+    capital_steady_state = df.at[row_index, 'K_star']
+    Epsilon = abs(capital - capital_steady_state)
+    return Epsilon
+
+
+def plot_variables(df, variables, xlabel='Period', ylabel='Values'):
+    """
+    # plot for Solow Questions
+    # it plots all in one graph
+    :param df: DataFrame containing the data.
+    :param variables: List of column names in df to be plotted.
+    :param xlabel: Label for the x-axis (string).
+    :param ylabel: Label for the y-axis (string).
+    """
+    for var in variables:
+        if var in df.columns:
+            plt.plot(df['Period'], df[var], label=var)
+        else:
+            print(f"Warning: {var} not found in DataFrame")
+
+    title = f"Time Series Plot of {', '.join(variables)}"
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xlim(0, df['Period'].iloc[-1])    # Set range x-axis to last period
+    plt.ylim(0, max(df[variables].max()) + 50)  # Adjust y-axis limit based on max value of specified variables
+    plt.legend()
+    plt.show()
+
+
+parameters = {
+    'Simulation Period (yrs)': 150,
+    'K_0': 100, # K_0 is 'capital' & eventually capital_steady_state
+    'L': 1000.0, # needed to calculate output
+    'A': 1.0,
+    'd': 0.15, # depreciation
+    's': 0.2,
+    'alpha': 1/3,
+    'epsilon': 10
+}
+
+quantitative_experiments = {
+    'A': [
+        {'new_value': 1.0, 'time_period': 1, 'length': 1}
+    ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'Capital': [0.0] * num_periods, # K_0 & eventually capital_steady_state (K*), but K* is in its own column (K_star)
+    'Output': [0.0] * num_periods, # Y & eventually output_steady_state(Y*), but Y* is its own column
+    'Investment': [0.0] * num_periods, # will be calculated
+    'Depreciation': [0.0] * num_periods, # will be calculated
+    'Change in Capital': [0.0] * num_periods, # will be calculated
+    'Epsilon': [0.0] * num_periods, # will be calculated 
+    's': [parameters['s']] * num_periods,
+    'd': [parameters['d']] * num_periods,
+    'A': [parameters['A']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'L': [parameters['L']] * num_periods,
+    'K_star': [0.0] * num_periods, # will be calculated
+    'Y_star': [0.0] * num_periods
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# To run all quantitative experiments b/ checking for epsilon
+experiments_initiated  = False
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    # Existing calculations
+    df.at[i, 'Capital'] = calc_Capital(df, i, parameters['K_0'])
+    df.at[i, 'Output'] = production_function(df, i, parameters['A'], parameters['K_0'], parameters['L'], parameters['alpha'])
+    df.at[i, 'K_star'] = calc_K_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Y_star'] = calc_Y_star(df, i, parameters['A'], parameters['s'], parameters['L'], parameters['alpha'], parameters['d'])
+    df.at[i, 'Investment'] = calc_Investment(df, i)
+    df.at[i, 'Depreciation'] = calc_Depreciation(df, i)
+    df.at[i, 'Change in Capital'] = calc_change_in_Capital(df, i)
+    df.at[i, 'Epsilon'] = calc_epsilon_value(df, i)
+
+    # run all quantitative experiments b/ checking for epsilon. Note: this code only checks for ran, not if the lenght is complete. 
+    if not experiments_initiated:
+        latest_start_time = max(exp['time_period'] for exp_list in quantitative_experiments.values() for exp in exp_list)
+        if i >= latest_start_time:
+            experiments_initiated = True
+
+    # stopping conditions for eprsilon & checks for all quant exp. ran.
+    if df.at[i, 'Epsilon'] < parameters['epsilon'] and experiments_initiated:
+        print('Stopping condition met at period:', i)
+        print('Capital:', '{:,.2f}'.format(df.at[i, 'Capital']))
+        print('Output:', '{:,.2f}'.format(df.at[i, 'Output']))
+        print('Investment:', '{:,.2f}'.format(df.at[i, 'Investment']))
+        print('Depreciation: ', '{:,.2f}'.format(df.at[i, 'Depreciation']))
+        print('Change in capital: ', '{:,.2f}'.format(df.at[i, 'Change in Capital']))
+        print('Epsilon', '{:,.2f}'.format(df.at[i, 'Epsilon']))
+        df = df[:i+1]
+        # display(df) # uncheck or check for df
+        break  # Exit the loop
+
+# Plot sample usage form Solow python project. 
+# variables_to_plot = ['Output', 'Capital', 'Depreciation', 'Investment']
+# plot_variables(df, variables_to_plot)
+
+```
+
+
+
+
+
+
+
+
+

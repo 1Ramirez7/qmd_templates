@@ -1,0 +1,470 @@
+---
+title: "Production Model"
+subtitle: "" # left blank
+author: "Name here"
+date: "March 10, 2025"
+format:
+  html:
+    self-contained: true
+    page-layout: full # article default custom
+    theme:
+      light: [flatly] # more themes can be found (https://quarto.org/docs/output-formats/html-themes.html)
+      dark: [darkly]
+    fontsize: 0.95em # changes all fonts. default is 1
+    linestretch: 1.5 # distance btw lines. defualt is 1.5
+    math: katex
+    toc: true # switch between: false or true
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: true
+        toggle: true
+        caption: See code
+execute:
+  python: .venv/Scripts/python.exe # important. If using this in a folder inside the root folder, use two periods for the program to know to read one folder back: ../.venv/Scripts/python.exe
+editor:
+  markdown:
+    wrap: sentence
+---
+
+
+
+
+```{python}
+#| echo: true
+# Write the code for the libraries you use to complete the assignment
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+
+```
+
+#  The Black Death
+
+__In the middle of the fourteenth century, an epidemic known as the Black Death killed about a third of Europe's population, about 34 million people. This enormous tragedy had macroeconomic consequences: wages were *higher* than before the Black Death over the next century. Questions 1 and 2 will help you understand why this happened.__
+
+
+# Q1: Solving the Production Model
+
+__Before answering any questions about the Black Death, first, understand the production function. Suppose the production function is given by__
+
+$$Y = \bar{A}K^{\alpha}L^{1-\alpha}$$
+
+__This specification is a general version of the production function we've been working with, where $\alpha$ is the "capital share of output."__
+
+
+__The Production Model:__
+
+
+<style>
+.custom-table {
+    display: inline-block;
+    margin: 0 auto;
+}
+</style>
+
+<div class="custom-table">
+
+| Description             | Formula                             |
+|-------------------------|-------------------------------------|
+| Production function     | $Y = \bar{A}K^{\alpha}L^{1 - \alpha}$ | 
+| Rule for hiring capital | $\alpha\frac{Y}{K}=r$               |
+| Rule for hiring labor   | $(1 - \alpha)\frac{Y}{L} = \omega$  |
+| Demand = Supply for capital | $K = \bar{K}$                   |
+| Demand = supply for labor  | $L = \bar{L}$                   |
+
+</div>
+
+__(a)__ What is the solution for the equilibrium level of output per person? Let $\bar{A} = 1$, $L = 200$, $K = 200$, $\alpha = \frac{1}{3}$. 
+Do this problem by hand, and input your solution below.
+
+The equilibrium level of output per person is 200.
+
+
+__(b)__ How does changing the level of TFP ($\bar{A}$) affect the equilibrium level of output, rental rate of capital, and wages? Answer this question using Python. 
+*Hint: Try defining a vector/array containing a series of values for TFP, i.e. $\bar{A}$=[0.5, 0.75, 1.25, 1.5]. Then let Python do the work and calculate everything for you using functions.
+
+```{python}
+# this is a calculation for the production model 02PQ1B from the aspired to do projects. 
+# think of way to streamline the parameters so they can be inserted to the main code.
+# this model is modeled after the Solow and on models to run quantitative experiments on the parameters. 
+import pandas as pd
+
+parameters = {
+    'Simulation Period (yrs)': 5,
+    'A_bar': 1.0,
+    'L_bar': 200,
+    'K_bar': 200,
+    'alpha': 1/3
+}
+
+
+quantitative_experiments = {
+  'A_bar': [
+          {'new_value': .5, 'time_period': 1, 'length': 1},
+          {'new_value': .75, 'time_period': 2, 'length': 1},
+          {'new_value': 1, 'time_period': 3, 'length': 1},
+          {'new_value': 1.25, 'time_period': 4, 'length': 1},
+          {'new_value': 1.5, 'time_period': 5, 'length': 1}
+  ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'A_bar': [parameters['A_bar']] * num_periods,
+    'L_bar': [parameters['L_bar']] * num_periods,
+    'K_bar': [parameters['K_bar']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'r*': [0.0] * num_periods, # Will be calculated
+    'w*': [0.0] * num_periods, # Will be calculated
+    'Y*': [0.0] * num_periods # Will be calculated
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# this is a cal for the question, maybe I can seperate in future updates to be more organized and when running more specific quantitative experiments
+# this def code is ready to be transfer to macrofunctions-----
+def equilibrium_level_of_output_02PQ1B(df, row_index):
+  r_star = df.at[row_index, 'alpha'] * df.at[row_index, 'A_bar'] * ((df.at[row_index, 'L_bar'] / df.at[row_index, 'K_bar']) ** (1-df.at[row_index, 'alpha']))
+  w_star = (1-df.at[row_index, 'alpha']) * df.at[row_index, 'A_bar'] * ((df.at[row_index, 'K_bar'] / df.at[row_index, 'L_bar']) ** (df.at[row_index, 'alpha']))
+  Y_star = df.at[row_index, 'A_bar'] * (df.at[row_index, 'K_bar'] ** (df.at[row_index, 'alpha'])) * (df.at[row_index, 'L_bar'] ** (1-df.at[row_index, 'alpha']))
+
+  r_star = round(r_star, 2)
+  w_star = round(w_star, 2)
+  Y_star = round(Y_star, 2)
+
+  return r_star, w_star, Y_star
+
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    r_star, w_star, Y_star = equilibrium_level_of_output_02PQ1B(df, i)
+    df.at[i, 'r*'] = r_star
+    df.at[i, 'w*'] = w_star
+    df.at[i, 'Y*'] = Y_star
+
+df
+
+
+```
+
+
+__Answer to Question 1 B: Less workers or less ideas results in lower interest rate and vice versa. More capital or less workers results in higher wages and vice versa.__
+
+
+# Q2: The Black Death and the marginal product of labor
+
+__(a)__ Show numerically how much wages would rise if a third of the population died from disease. Assume that before the black death the model parameters are $\bar{A} = 1$, $L = 200$, $K = 200$, $\alpha = 1/3$, $Y = \bar{A}K^{1/3}L^{2/3}$.
+
+
+```{python}
+# This is the second version of this code, the first is in question 1. 
+import pandas as pd
+
+parameters = {
+    'Simulation Period (yrs)': 1,
+    'A_bar': 1.0,
+    'L_bar': 200,
+    'K_bar': 200,
+    'alpha': 1/3
+}
+
+
+quantitative_experiments = {
+  'L_bar': [
+          {'new_value': 200*2/3, 'time_period': 0, 'length': 1},
+          {'new_value': 200, 'time_period': 1, 'length': 1}
+  ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'A_bar': [parameters['A_bar']] * num_periods,
+    'L_bar': [parameters['L_bar']] * num_periods,
+    'K_bar': [parameters['K_bar']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'r*': [0.0] * num_periods, # Will be calculated
+    'w*': [0.0] * num_periods, # Will be calculated
+    'Y*': [0.0] * num_periods # Will be calculated
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# this is a cal for the question, maybe I can seperate in future updates to be more organized and when running more specific quantitative experiments
+# this def code is ready to be transfer to macrofunctions-----
+def equilibrium_level_of_output_02PQ1B(df, row_index):
+  r_star = df.at[row_index, 'alpha'] * df.at[row_index, 'A_bar'] * ((df.at[row_index, 'L_bar'] / df.at[row_index, 'K_bar']) ** (1-df.at[row_index, 'alpha']))
+  w_star = (1-df.at[row_index, 'alpha']) * df.at[row_index, 'A_bar'] * ((df.at[row_index, 'K_bar'] / df.at[row_index, 'L_bar']) ** (df.at[row_index, 'alpha']))
+  Y_star = df.at[row_index, 'A_bar'] * (df.at[row_index, 'K_bar'] ** (df.at[row_index, 'alpha'])) * (df.at[row_index, 'L_bar'] ** (1-df.at[row_index, 'alpha']))
+
+  r_star = round(r_star, 2)
+  w_star = round(w_star, 2)
+  Y_star = round(Y_star, 2)
+
+  return r_star, w_star, Y_star
+
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    r_star, w_star, Y_star = equilibrium_level_of_output_02PQ1B(df, i)
+    df.at[i, 'r*'] = r_star
+    df.at[i, 'w*'] = w_star
+    df.at[i, 'Y*'] = Y_star
+
+df
+
+```
+
+Using the Wage equation so w* = 2/3 * A_bar * (K_bar/L_bar)^1/3 - w* = 2/3 * 1 * (200/200*2/3)^1/3 results in w* = 0.76 or roughly 13.5% increase in wage. 
+
+__(b)__ Suppose that instead of the black plague there was an alien invasion of Europe that didn't kill anyone, but instead brought in new technology. How much would TFP have to increase to raise wages as much as the black plague? 
+
+
+```{python}
+# This is the third copy of this code, the first is in question 1. 
+import pandas as pd
+
+parameters = {
+    'Simulation Period (yrs)': 2,
+    'A_bar': 1.0,
+    'L_bar': 200,
+    'K_bar': 200,
+    'alpha': 1/3
+}
+
+quantitative_experiments = {
+  'L_bar': [
+          {'new_value': 200, 'time_period': 0, 'length': 1},
+          {'new_value': 200*2/3, 'time_period': 1, 'length': 1}
+  ],
+  'A_bar': [
+          {'new_value': 1.144714, 'time_period': 2, 'length': 1}
+  ]
+} # to add just use the same format & change parameter
+
+# Initialize the DataFrame
+num_periods = parameters['Simulation Period (yrs)'] + 1
+df = pd.DataFrame({
+    'Period': range(num_periods),
+    'A_bar': [parameters['A_bar']] * num_periods,
+    'L_bar': [parameters['L_bar']] * num_periods,
+    'K_bar': [parameters['K_bar']] * num_periods,
+    'alpha': [parameters['alpha']] * num_periods,
+    'r*': [0.0] * num_periods, # Will be calculated
+    'w*': [0.0] * num_periods, # Will be calculated
+    'Y*': [0.0] * num_periods # Will be calculated
+})
+
+# Apply Quantitative Experiments
+for param, changes_list in quantitative_experiments.items():
+    for changes in changes_list:
+        for period in range(changes['time_period'], changes['time_period'] + changes['length']):
+            if period < num_periods:
+                df.at[period, param] = changes['new_value']
+
+# this is a cal for the question, maybe I can seperate in future updates to be more organized and when running more specific quantitative experiments
+# this def code is ready to be transfer to macrofunctions-----
+def equilibrium_level_of_output_02PQ1B(df, row_index):
+  r_star = df.at[row_index, 'alpha'] * df.at[row_index, 'A_bar'] * ((df.at[row_index, 'L_bar'] / df.at[row_index, 'K_bar']) ** (1-df.at[row_index, 'alpha']))
+  w_star = (1-df.at[row_index, 'alpha']) * df.at[row_index, 'A_bar'] * ((df.at[row_index, 'K_bar'] / df.at[row_index, 'L_bar']) ** (df.at[row_index, 'alpha']))
+  Y_star = df.at[row_index, 'A_bar'] * (df.at[row_index, 'K_bar'] ** (df.at[row_index, 'alpha'])) * (df.at[row_index, 'L_bar'] ** (1-df.at[row_index, 'alpha']))
+
+  r_star = round(r_star, 2)
+  w_star = round(w_star, 2)
+  Y_star = round(Y_star, 2)
+
+  return r_star, w_star, Y_star
+
+
+# Loop def functions through DataFrame
+for i in range(len(df)):
+    r_star, w_star, Y_star = equilibrium_level_of_output_02PQ1B(df, i)
+    df.at[i, 'r*'] = r_star
+    df.at[i, 'w*'] = w_star
+    df.at[i, 'Y*'] = Y_star
+
+pd.set_option('display.precision', 2) # edit decimal places of df
+df
+
+# picture of calculations
+# ![IS model Functions](C:/Users/eduar/OneDrive - BYU-Idaho/Desktop/Coding/Macro/data files/pictures/02P_Q1B_production_model.png)
+```
+
+TFP would have to increase by 1.144714 in order to be at the same level of wage that the black plague brought. This will cause an increased in interest rates as well which the black plague did not so although wage will be the same, the buying power will be less. 
+
+
+
+# Q3: The empirical fit of the production model
+
+The table below reports per capita GDP and capital per person in the year 2014 for 10 countries. __Your task is to fill in the missing columns of the data frame by completing steps a) thorugh d).__
+
+```{python}
+#| echo: true
+# Run this code to create the data frame!
+import pandas as pd
+
+countries = ['United States', 'Canada', 'France', 'Hong Kong', 'South Korea', 'Indonesia', 'Argentina', 'Mexico', 'Kenya', 'Ethiopia']
+capital_per_person1 = [141841, 128667, 162207, 159247, 120472, 41044, 53821, 45039, 4686, 3227]
+per_capita_GDP2 = [51895, 43367, 37360, 45095, 34961, 9797, 20074, 15521, 2971, 1505]
+capital_per_person3 = [1.0, '', '', '', '', '', '', '', '', '']
+per_capita_GDP4 = [1.0, '', '', '', '', '', '', '', '', '']
+predicted_y = [1.0, '', '', '', '', '', '', '', '', '']
+implied_TFP = [1.0, '', '', '', '', '', '', '', '', '']
+
+df = pd.DataFrame({'Country(0)':countries, 
+                   'Capital per person(1)':capital_per_person1, 
+                   'Per capita GDP(2)':per_capita_GDP2, 
+                   'Capital per person(3)':capital_per_person3, 
+                   'Per capita GDP(4)':per_capita_GDP4, 
+                   'Predicted y*(5)':predicted_y, 
+                   'Implied TFP(6)':implied_TFP}, columns=['Country(0)', 'Capital per person(1)', 'Per capita GDP(2)', 'Capital per person(3)', 'Per capita GDP(4)', 'Predicted y*(5)', 'Implied TFP(6)'])
+df
+```
+
+
+**(a)** Given the values in columns 1 and 2 which are in U.S. dollars, fill in columns 3 and 4 which are relative to U.S. values (U.S. = 1). That is, compute per capita GDP and capital per person relative to the U.S. values taking the ratio of each country's value (either Per capita GDP or Capital per Person) to the corresponding US value. 
+
+
+**(b)** In column 5, use the production model (with $\alpha=1/3$) to compute predicted per capita GDP for each country relative to the United States. Assume $\bar{A}=1$, which implies there are no TFP differences across countries. This implies the production function is $y^\ast = \bar{A}k^{1/3}$.
+
+
+
+
+**(c)** In column 6, compute the level of TFP that is needed so that the Predicted y* (5) matches Per capital GDP (4)
+
+```{python}
+import pandas as pd
+
+
+countries = ['United States', 'Canada', 'France', 'Hong Kong', 'South Korea', 'Indonesia', 'Argentina', 'Mexico', 'Kenya', 'Ethiopia']
+capital_per_person1 = [141841, 128667, 162207, 159247, 120472, 41044, 53821, 45039, 4686, 3227]
+per_capita_GDP2 = [51895, 43367, 37360, 45095, 34961, 9797, 20074, 15521, 2971, 1505]
+
+# calculate capital per person and per capita GDP relative to the US
+us_capital_per_person = capital_per_person1[0]
+us_per_capita_GDP = per_capita_GDP2[0]
+
+capital_per_person3 = [x/us_capital_per_person for x in capital_per_person1]
+per_capita_GDP4 = [x/us_per_capita_GDP for x in per_capita_GDP2]
+
+# ourPredicted y* (per capita GDP) using the production model
+alpha = 1/3
+predicted_y = [k**alpha for k in capital_per_person3]
+
+# Compute the level of TFP (Implied TFP)
+implied_TFP = [per_capita_GDP4[i]/predicted_y[i] for i in range(len(per_capita_GDP4))]
+
+# df
+df = pd.DataFrame({
+    'Country(0)': countries, 
+    'Capital per person(1)': capital_per_person1, 
+    'Per capita GDP(2)': per_capita_GDP2, 
+    'Capital per person(3)': capital_per_person3, 
+    'Per capita GDP(4)': per_capita_GDP4, 
+    'Predicted y*(5)': predicted_y, 
+    'Implied TFP(6)': implied_TFP
+})
+
+pd.set_option('display.precision', 2) # edit decimal places of df
+
+df
+```
+
+**(d)** Comment on the general results you find.
+
+Examining the results, I find it striking how capital per person doesn't always correlate with higher GDP per capita, as seen in France and Hong Kong. This underscores the significance of Total Factor Productivity (TFP) in economic output. The wide variation in implied TFP across countries, especially between developed and developing nations, highlights the role of efficiency and other factors beyond just capital in determining a country's economic performance. It's clear that TFP, reflecting aspects like technology and institutional quality, is crucial in understanding economic disparities.
+
+
+
+# Q4: The labor share and Cobb-Douglas production 
+
+Below is the code to download the FRED `ch04_labor_compensation.csv` file (see 6(a) code comments) for the share of income paid to labor for the nonfarm business sector of the U.S. economy, back to 1950. (For an introduction to FRED, see the case study "The FRED database" in Chapter 2 of your textbook). Press shift + enter to run the code, and then answer the questions underneatch it.
+
+
+__(a)__ Create a time series plot of the data you downloaded.
+
+_Hint:  For the plotting consider using the pandas function df.plot where df is the name of your data frame._
+
+```{python}
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+#Press shift + enter to run this code
+df = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch04_labor_compensation.csv',
+                   header=0, names=['Date', 'Labor Compensation'], index_col = 0) # 'Date' and 'Labor Compensation' are the new column names
+
+# display(df) # display is off 
+
+def plot_1_vs_period(dataframe, y_variable):
+    if y_variable in dataframe.columns:
+        plt.scatter(dataframe.index, dataframe[y_variable])
+        plt.plot(dataframe.index, dataframe[y_variable], linestyle='-', color='blue')
+        plt.xlabel('Date')
+        plt.ylabel(y_variable)
+        plt.title(f'{y_variable} over Time')
+        plt.xticks([1,10,20, 30, 40, 50, 60]) # ticks
+        plt.xticks(rotation=90)  # Rotate the x-axis labels
+        plt.grid(True)
+        plt.show()
+    else:
+        print(f"Column '{y_variable}' not found in DataFrame.")
+
+plot_1_vs_period(df, 'Labor Compensation')
+
+```
+
+
+
+
+**(b)** What is the value of the labor share for your most recent data point? 
+```{python}
+import pandas as pd
+#Press shift + enter to run this code
+df = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch04_labor_compensation.csv',
+                   header=0, names=['Date', 'Labor Compensation'], index_col = 0) # 'Date' and 'Labor Compensation' are the new column names
+
+display(df.iloc[-1])
+```
+
+
+**(c)** What does the data suggest about the validity of our assumptions that the production function is Cobb-Douglas?
+
+
+It seems that the production function is correct in the production share of labor, but the time series trend is labor production share is getting smaller over time and the last data observation was in 2011-1-1 and was 60 for the labor share. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

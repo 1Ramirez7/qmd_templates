@@ -1,0 +1,340 @@
+---
+title: "Analyzing the Solow and Romer-Solow Models"
+subtitle: "" # left blank
+author: "Eduardo Ramirez"
+date: "March 10, 2025"
+format:
+  html:
+    self-contained: true
+    page-layout: article
+    theme:
+      light: [flatly] # more themes can be found (https://quarto.org/docs/output-formats/html-themes.html)
+      dark: [darkly]
+    fontsize: 0.95em # changes all fonts. default is 1
+    linestretch: 1.5 # distance btw lines. defualt is 1.5
+    math: katex
+    toc: false
+    toc-depth: 3
+    toc-location: body
+    number-sections: true
+execute:
+  python: .venv/Scripts/python.exe # important. If using this in a folder inside the root folder, use two periods for vs code to read one folder back: ../.venv/Scripts/python.exe
+  warning: false
+  cache: false  # to load png when rendering locally
+editor:
+  markdown:
+    wrap: sentence
+---
+
+# Part 2.1
+
+## Part 2.1.1: Explain and illustrate how output, capital, investment, and TFP evolve.
+
+There is a period of 10 to 30 or 40 years from when a change in parameters like the research share lower the model results compare to the to no change in “l”. After this time the research share takes effect, and it overtakes the original model results (output capital etc). It is evident that most of the changes in the model lag a few decades before we can see the results, and I will refer to this time period as “The Tortoise” or any reference and or mentioned to Tortoise refers to this time period.  
+
+
+
+
+**Output**
+
+
+
+We have learned how potential TFP is, and in this chapter, we learn how an economy can allocate part of the labor to the research share. Government officials can allocate workers to research by passing/making policies that encourage new inventions and entrepreneur work. As new research workers invent and or create things or projects that result in innovative technologies and or more productive work force. 
+
+When $\ell$, the number of workers producing final goods falls, output thus drops in the short run (see @fig-2_1_1_logY). This drop also affects consumption since total production is lower initially. So initially in the first 2 to 3 decades output would see a decline, but exponentially increase over time as shown in @fig-2_1_1_Y. 
+
+**Capital**
+
+The lower output initially, savings and investments both decrease. 
+
+
+
+Capital accumulation slows due to investment not being enough to cover the current level of depreciation. Overtime, as new ideas from research improve productivity, output grows exponentially faster than the counterfactual and Capital improves because of the increase in research share. We can see in @fig-2_1_1_logK whe Capital surpasses the counterfactual level around 60 periods later. The research share will then have is immpact as capital will grow at a larger rate the the counterfactual proving the benefits of increasing the research share. 
+
+
+and exponential growth @fig-2_1_1_K see the same pattern as output. 
+
+**Depreciation** 
+
+*Depreciation* will cause the change in capital accumulation to be negative due to the decrease in savings, and the chnage in capital accumulation will slowly go back to its normal state as seen in @fig-2_1_1_percent_delta_k. 
+
+This is cause for attention because the depreciated capital was not replenish which resulted in lower capital efficiency. The depreciated capital was not replenish, as the economy goes back to its normal growth *investments* and *depreciation* grow proportionally to one another so capital efficiency does not go back to its original level as shown in @fig-2_1_1_little_k. 
+
+**Investment & TFP**
+
+The upside is that a larger $\ell$ means more researchers creating new ideas. In the Romer model, new ideas (TFP) are non-rival: once discovered, everyone in production can use them without diminishing their usefulness. The interest rate return on capital shows us how the increase in research share lead to a higher return on capital (@fig-2.1.1.MPK) than it would have been wihtout. The increase in $\ell$ does a good job in explaining how an economy becomes more productive and effective over time. 
+
+The overall level of investment initially goes down due to a lower number of workers contributing to output, and this is the reason why we see capital accumulation go down because the new investment level was lower than the depreciation level and also see that reflection in the wage rate @fig-2.1.1.MPL. 
+
+## Part 2.1.2 Discuss the consequences of this reallocation of labor.
+
+In @fig-2.1.2_calculations we see some of the calculations that are effected by the reallocation of labor. 
+
+To summarize, some of the consequences is lower number of workers contributing to GDP, which causes output to go down. The lower output causes the total savings to go down which results in a lower investment amount. This causes depreciation to be greater than investment for a couple periods and causes capital efficiency to go down due to the economy not having a proper level of savings rate to replace depreciated capital. This economy does not do anything about this change in capital efficiency so the loss is permanent and why we see capital efficeincy go down to a lower level and remain there permanently (@fig-2_1_1_little_k). 
+
+
+
+# Part 2.2 China's Growth 
+
+Technology Transfers 2: One explanation for China's rapid economic growth during the past several decades is its expansion of policies that encourage "technology transfer." By this, we mean policies—such as opening up to international trade and attracting multinational corporations through various incentives—that promote the use and adoption of new ideas and new technologies in China. This question asks you to use the Romer-Solow model to study this scenario. Suppose China begins in the steady-state. Then, to keep the problem simple, let's assume the sole result of these technology transfer policies is to double TFP at $t = 40$
+.
+
+## 2.2.1: Explain and illustrate how output, capital, investment, and TFP evolve.
+
+
+In this scenario, China experiences a major policy shift in period 20 that instantly doubles TFP (A). Prior to period 20, parameters remain unchanged, and TFP evolves along a more modest path. The doubling at period 20 reflects reforms granting stronger property rights over ideas—once these reforms take effect, innovation and research productivity skyrocket. Below is how each major variable (TFP, capital, investment, and output) reacts.
+
+**TFP**
+
+Period 1–19: TFP follows its prior, relatively flat trajectory. No large spikes in research share or productivity occur; growth is steady.
+
+Period 20 “Jump”: At the start of period 20, TFP doubles. This surge could be interpreted as an immediate outcome of new policy enabling innovators and firms to claim and profit from their ideas.
+
+Post-20 Dynamics: After period 20, TFP remains on a higher path as shown in @fig-logalong. Even if the fraction of labor devoted to research remains unchanged, the system continues to generate endogenous improvements over time because the knowledge base has leapt to a higher level. This ensures persistent gains going forward. Afterall $\ell$ was introduced in this model to better explained the residuals of this model and the Solow model.
+
+**Capital Accumulation**
+
+Pre-Reform (Periods 1–19): Because TFP is relatively modest, capital accumulation is positive but steady. The number of workers in production is stable, and the marginal product of capital changes slowly.
+
+Immediate Impact of Doubling TFP: Once TFP jumps in period 20, the marginal product of capital rises significantly and we can compare this to the counterfactual MPK as shown in @fig-2.2.1_MPK_short (scnario 1 is part 2.2.1 and scenario 2 is part 2.2.2). Higher productivity implies that each unit of capital now yields greater output, so firms ramp up investment and we can see how much more Capital accumulation increase in @fig-2.2.1_logA. 
+
+Longer-Run Capital Growth: Over periods 20–40, capital accumulation accelerates (since the return on saving/investing is now higher). Eventually, as capital expands to match the new productivity level, returns begin to moderate—but remain above their old pre-20 baseline. Ultimately, capital settles onto a higher growth path in lockstep with the elevated productivity as seen for scenario 1 in @fig-2.2.1_k.
+
+**Output**
+
+Initial (Periods 1–19): Output tracks the moderate TFP path. Growth is positive but unremarkable.
+
+Period 20 Spike: As soon as TFP doubles, output jumps—and then continues to grow faster than before because knowledge has reached a higher base. This is not just a one-off bump; the enhanced productivity keeps pushing output upward in subsequent periods as shown in @fig-2.2.1_Y.
+
+
+
+
+Long-Run Path: Output does not plateau; it now grows endogenously thanks to ongoing knowledge gains. While the highest growth rates may appear in the immediate aftermath of period 20 (when capital is catching up), output in the long run remains at a permanently higher growth path than it would have otherwise.
+
+
+
+
+
+
+
+
+## The Solow vs Romer-Solow models
+
+**You are part of the US President's Council of Economic Advisors. Your team ran the simulations using the Solow model; now they present these new results with an updated model. Discuss the differences between the models and your evaluation of the technology transfer poverty-alleviation program.**
+
+
+**output figures**
+---
+
+### **Solow Model: Output and TFP Evolution**
+
+The **Solow model** focuses on **capital accumulation** and assumes **TFP is exogenous**, meaning it remains fixed or changes only due to external forces (not within the model).
+
+### **Output (Y) Movement in the Solow Model**
+1. **Short-run:** If the capital stock increases (through more investment), output increases. However, due to **diminishing marginal returns to capital**, the rate of output growth slows over time as shown in the second scenario line in @fig-capitalshort.
+2. **Long-run:** The economy converges to a **steady state** where investment equals depreciation, meaning **output per worker stabilizes** at a constant level.
+3. **Transition Dynamics:** Poorer economies grow faster if they are below their steady state, but growth slows as they approach it.
+
+### **TFP (A) in the Solow Model**
+1. **Exogenous:** TFP is not determined within the model; it is an **external factor** (e.g., technological innovations, policy shifts).
+2. **One-time Shocks:** A sudden increase in TFP (e.g., due to technology transfers, see 2nd scenario in @fig-logashort) leads to **a higher steady-state level of output**, but does **not** cause sustained growth.
+
+### **Key Takeaways for Solow**
+- **Output growth slows** over time due to diminishing returns to capital.
+- **TFP is a constant** unless shocked (e.g., policy-driven increases). 
+- **No sustained long-term growth**—growth stops at steady state. See 2nd scenarion in @fig-outputlong.
+
+---
+
+### **Solow-Romer Model**
+The **Solow-Romer model** extends Solow by making **TFP endogenous**, meaning it grows over time due to research and innovation.
+
+### **Output (Y) Movement in the Solow-Romer Model**
+1. **Short-run:** An increase in the research share (l) reduces initial output because **fewer workers contribute to production**, shifting them to research.
+2. **Long-run:** The **growth rate of output is permanently higher** than in the Solow model because new ideas (TFP) keep improving production and scenario 1 in @fig-outputlong reflects the permanat increase in output.
+3. **Policy Changes:** An increase in **research productivity (z)** or **research share (l)** leads to **higher long-run output growth**.
+4. **Transition Dynamics:** Unlike Solow, there is no steady-state output level—growth continues indefinitely because of **constant TFP improvements**. 
+
+### **TFP (A) in the Solow-Romer Model**
+1. **Endogenous Growth:** TFP grows due to research and knowledge accumulation:  
+$$
+\Delta A_{t+1} = z A_t L_{at}
+$$
+   where **A grows at a rate proportional to research effort**.
+2. **Permanent Growth:** Unlike Solow, **TFP keeps growing over time**, ensuring sustained economic growth.
+3. **Effects of Research:** Higher research share (l) means **initially lower output** but much **higher long-run growth**.
+
+### **Key Takeaways for Solow-Romer**
+- **Output growth is sustained** due to continuous increases in TFP.
+- **TFP grows endogenously** with research efforts.
+- **Policies targeting R&D** directly boost long-run economic growth.
+
+---
+
+### **Comparison Table: Output and TFP in Solow vs. Solow-Romer**
+
+| Feature              | Solow Model                                  | Solow-Romer Model                          |
+|----------------------|---------------------------------|--------------------------------|
+| **Output Growth** @fig-outputlong | Slows over time, stops at steady state | Continuous due to growing TFP |
+| **TFP Growth** @fig-logalong | Fixed (exogenous, only changes due to shocks) | Endogenous (increases with research) |
+| **Effect of More Research (l)** | No impact on long-term growth | Increases long-term growth |
+| **Effect of Technology Shock** | One-time increase in output, no permanent growth | Permanent increase in both output and growth rate |
+| **Steady-State Output?** | Yes (growth stops) | No (growth continues forever) |
+
+---
+
+
+# Growth Policy (part 2.3)
+
+Your work on technology transfers brought some interesting questions about growth policy to the council. The President would like to know how the US can best dedicate limited resources to encourage economic growth. Compare the policies of **doubling the research share** through university enrollment in the STEME fields against **doubling the research productivity** by providing more grants to the NSF, against **increasing the population by 10%** through a generous immigration program. 
+
+## **Explain and illustrate how output, capital, investment, and TFP evolve under each alternative.** (part 2.3.1)
+
+Table 1 describes the results in @fig-2.3.1_Ylong_log and how this three scenarios affected Output.
+
+**Table 1: Growth Policy Scenarios**
+
+| Feature                       | Scenario 1: Double Research Share ($l$) | Scenario 2: Double Research Productivity | Scenario 3: Increase Population by 10% |
+|--------------------------------|----------------------------------------|------------------------------------------|----------------------------------------|
+| **Initial Long Run Impact on Output**   | Decreases output                      | No immediate impact                      | Increases output                      |
+| **Short-Term Growth (40 yrs)** | Worse off than counterfactual         | Better off than counterfactual          | Best off among scenarios              |
+| **Medium-Term Growth (90 yrs)**| Better off (3rd best)                 | Best off                                | Better off (2nd best)                 |
+| **Long-Term Growth (140 yrs)** | Better off (2nd best)                 | Best off                                | Better off (3rd best)                 |
+
+
+
+The growth rate of output $\frac{\Delta A_{t+1}}{A_{t}}=\bar{z} L_{a t}=\bar{z} \bar{\ell} \bar{L}$ suggest all of this three parameters would increase the overall growth rate. $\ell$ is the fraction of the workforce creating ideas. $\bar{z}$ is how efficiently researches can use old ideas to create new valuable ideas. $\bar{L}$ is the size of the overall workforce. Any increase in any of this three parameters would cause an increase in the overall growth rate of an economy. 
+
+1.  Increasing the research share increases the growth rate of output. This in part has to do with the fact that there will be an increase in nolrivalry[^nolrivalry] goods over time as a result in an increase $\ell$ as seen in @fig-2.3.1_l_inc.  
+
+2. Double the research productivity parameter has the best long run effect out of the three changes. This is because all growth coming from $\bar{z}$ will be nolrivalrous so anyone who uses these new ideas would benefit because nothing else gets replaced. $\ell$ reduces the number of workers contributing to output, and causes output to be lower than the counterfactual level for at least 40 years and after 90 years $Y$ is still lower than the $Y$ for $\bar{z}$ & $\bar{L}$. 
+
+3. Increasing the population by 10% has has the best effect short-term growth(40 years @fig-2.3.1_Yshort). Since we include nonrivalry ideas in this model, new workers would also use this ideas and no one will be effected, and does not effect capital. A larger population also means there is a larger number of research workers which will contribute to new ideas. We can visually see the increase in $\bar{L}$ in @fig-2.3.1_L_increase of the book. 
+
+4. I don't have the correct investment plot, but @fig-2.3.1_MPKlong shows up how this changes change the interest individuals receive from their investments. We can see that an increase in research productivity has the best returns in investments, while an increase in $\bar{L}$ plays no change in the investment returns. The indrease in $\ell$ had an initial negative effect in the investment returns of individuals, but it saw increasing returns to scale overtime and after 5o years it was nearly indentical to the investment returns of the change in $\bar{z}$ as we can see in @fig-2.3.1_MPKlong.
+
+## What is your recommendation to the President? Justify your choice. (Part 2.3.2)
+
+My recommendation will depend of the situation, if the president is not only trying to get the economy out of a recession, but continue to see growth afterwards, then increasing the population will have the best results. Increasing the research share will worsen output, and leave fewers working contributing to output. Coming out of a recession and having growth afterwards requires the man power available to increasing the research share under this scenario is not the choice. If the economy has had great growth numbers over the last couple years, and the growth is causing inflation to rise, then increasing the research share under this scenario will be the best choice. This will help easen preassure on inflation, and avoid using contractionary policy which can have a more negative impact in the economy. The increase in research share will benefit our great grand children and they will have to figure out how to deal with the inflation we postponed. 
+
+IF the economy is facing a period that can lead to under productivity or slower growth but nonetheless the economy has been performing, then increasing the research productivity will have the best outcome. 
+
+
+# Index
+
+---
+
+::: {.columns}
+:::: {.column width="50%"}
+
+**Part 2.1.1 figures**
+
+![ ](ss/part2_1_1 new/plot_log_Y.png){#fig-2_1_1_logY}
+
+![ ](ss/part2_1_1 new/plot_Y.png){#fig-2_1_1_Y}
+
+![ ](ss/part2_1_1 new/plot_log_K.png){#fig-2_1_1_logK}
+
+![ ](ss/part2_1_1 new/plot_K.png){#fig-2_1_1_K}
+
+![ ](ss/part2_1_1 new/plot_little_k.png){#fig-2_1_1_little_k}
+
+![ ](ss/part2_1_1 new/plot_percent_delta_k.png){#fig-2_1_1_percent_delta_k}
+
+![ ](ss/part2_1_1 new/plot_MPK.png){#fig-2.1.1.MPK}
+
+![ ](ss/part2_1_1 new/plot_MPL.png){#fig-2.1.1.MPL}
+
+![ ](ss/part2_1_1 new/plot_log_A.png){#fig-2.1.1_logA}
+
+![ ](ss/parttwotwotwo/Y.png){#fig-outputlong}
+
+
+
+
+![ ](ss/parttwotwotwo/short/plot_log_A.png){#fig-logashort}
+
+![ ](ss/parttwotwotwo/log_A.png){#fig-logalong}
+
+::::
+:::: {.column width="50%"}
+
+
+
+**2.1.2 figures**
+
+![ ](ss/part2_1_2/calculations.png){#fig-2.1.2_calculations}
+
+
+
+**part 2.1 figures**
+
+![ ](ss/parttwotwotwo/short/plot_MPK.png){#fig-2.2.1_MPK_short}
+
+![ ](ss/parttwotwotwo/short/plot_log_k.png){#fig-2.2.1_logA}
+
+![ ](ss/parttwotwotwo/K.png){#fig-2.2.1_k}
+
+![ ](ss/parttwotwotwo/y.png){#fig-2.2.1_Y}
+
+
+**figures for part two 2.2**
+
+![ ](ss/parttwotwotwo/short/plot_K.png){#fig-capitalshort}
+
+![ ](ss/parttwotwotwo/K.png){#fig-capitallong}
+
+![ ](ss/parttwotwotwo/MPK.png){#fig-2.2.2_MPK}
+
+![ ](ss/parttwotwotwo/short/plot_little_k.png){#fig-littlekshort}
+
+![ ](ss/parttwotwotwo/little_k.png){#fig-littleklong}
+
+![ ](ss/parttwotwotwo/short/plot_Y.png){#fig-outputshort}
+
+
+
+
+::::
+:::
+
+
+---
+
+**part 2.3.1 figures**
+
+
+::: {.columns}
+:::: {.column width="50%"}
+
+![Part 2.3.1 Y long](ss/2_3_1_long/plot_log_Y.png){#fig-2.3.1_Ylong_log}
+
+![Part 2.3.1 Y short](ss/2_3_1_long/2_3_1_short/plot_Y.png){#fig-2.3.1_Yshort}
+
+![Book: Figure 6.3](ss/2_3_1_long/figure6_3_book_inc_L.png){#fig-2.3.1_L_increase}
+
+::::
+:::: {.column width="50%"}
+
+![Book: Figure 6.4](ss/2_3_1_long/figure6_4_book_inc_research.png){#fig-2.3.1_l_inc}
+
+![Part 2.3.1 Y long](ss/2_3_1_long/plot_MPK.png){#fig-2.3.1_MPKlong}
+
+::::
+:::
+
+
+
+
+
+
+
+[^nolrivalry]: A nonrivalrous good  can’t be “used up,” since no matter how much it gets used, there’s still just as much of it around for everyone  else. 
+
+
+
+
+
+
+
+

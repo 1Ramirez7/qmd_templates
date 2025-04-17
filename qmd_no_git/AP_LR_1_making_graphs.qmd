@@ -1,0 +1,215 @@
+---
+title: "Advanced Project: Long Run"
+subtitle: "" # left blank
+author: "Name here"
+date: "March 10, 2025"
+format:
+  html:
+    self-contained: true
+    page-layout: full # article default custom
+    theme:
+      light: [flatly] # more themes can be found (https://quarto.org/docs/output-formats/html-themes.html)
+      dark: [darkly]
+    fontsize: 0.95em # changes all fonts. default is 1
+    linestretch: 1.5 # distance btw lines. defualt is 1.5
+    math: katex
+    toc: true # switch between: false or true
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: true
+        toggle: true
+        caption: See code
+execute:
+  python: .venv/Scripts/python.exe # important. If using this in a folder inside the root folder, use two periods for the program to know to read one folder back: ../.venv/Scripts/python.exe
+editor:
+  markdown:
+    wrap: sentence
+---
+
+
+
+
+##  1. Imp CSV files and Making Time Series Grpahs
+
+
+__Part A: Plot of per capita GDP (in Dollars) - Country time series graph__
+
+```{python}
+#| echo: true
+# This is from the AP_LR_TimeSeriesGraphs file. 
+
+#importing CSV files and  creating a single and multiple variable time-series graphs.
+# Make a plot of per capita GDP (in dollars) for the years 1950 to 2014 for a country of your choice. Label the x-axis "year" and the y-axis "per capita GDP." 
+# Packages used in this guide.
+import pandas as pd
+import plotly.graph_objects as go
+
+# Read the CSV file
+percap_gdp = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch01_gdp.csv')
+
+# The longer code "Enter..." will prompt for a country code
+# country_code = input("Enter the country code of the country you want to plot per capita GDP for (e.g., USA): ")
+
+# Code same as above, only one can be selected.
+country_code = "USA"  # Change to fixed country instead of prompt.
+
+# Filter for selected country
+percap_gdp_country = percap_gdp[percap_gdp['country'] == country_code]
+
+# Create fig
+fig = go.Figure()
+
+# Add trace for per capita GDP
+fig.add_trace(go.Scatter(x=percap_gdp_country['year'], y=percap_gdp_country['y_pop'], mode='lines'))
+
+# Customize the plot
+fig.update_layout(title=f'{country_code} per capita GDP Over Time',
+                  xaxis_title='Year',
+                  yaxis_title='Per Capita GDP',
+                  showlegend=False,  # Hide legend
+                  template='plotly_white')  # template for better visibility
+
+
+fig.show()
+
+
+```
+
+
+__Part B: Plot of per capita GDP relative to the US vs 3 other countries__ 
+
+_(b) Make a plot of per capita GDP relative to the United States (US = 100) from 1950 to 2014. The graph should include the United States and three other countries of your choice, all on the same chart. Label the lines in an informative way so that each line can be associated with its country. Finally, write a short description of the plot you create._
+
+```{python}
+#| echo: true
+
+#Packages used in this guide.
+import pandas as pd
+import plotly.graph_objects as go
+
+# Define the list of countries
+three_countries = ['ARM', 'CAN', 'RUS', 'USA']
+
+# Read the CSV file
+percap_gdp = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch01_gdp.csv')
+
+# Filter the data for the selected countries
+percap_gdp = percap_gdp[percap_gdp['country'].isin(three_countries)]
+
+# The following code creates a figure that contains more than one data series. Compare it to the
+# code we wrote for the previous question.
+# Plot the data using Plotly
+fig = go.Figure()
+for i in three_countries:
+    plot_dat = percap_gdp.query("country == @i")
+    fig.add_trace(go.Scatter(x=plot_dat["year"], y=plot_dat["y_pop_us_100"], mode='lines', name=i))
+
+# Now let's customize the plot. The following code sets labels on the x and y axis and sets the
+# title for the figure. Note that it uses a previously defined variable in the title that changes
+# every time you change your choice of countries (see code cell above)
+
+# Customize the plot
+fig.update_layout(
+    title="Per Capita GDP Relative to the US (1950-2014) for " + str(three_countries),
+    xaxis_title="Year",
+    yaxis_title="Per Capita GDP (U.S. = 100)",
+    legend_title="Country",
+    showlegend=True,
+    grid=dict(),
+)
+
+# Show the plot
+fig.show()
+
+
+
+```
+
+
+## 2. Datetime package
+
+_A date in Python is not a data type on its own, but the module datetime allows us to work with dates as objects. We can use objects to create relationships and illustrations. Importantly for economics, time-series graphs use the datetime module in Python to correctly show dates. A further guide of the module is Here Using the data found Here import the data for ch08_italy_inflation.csv and ch08_italy_bond.csv. Ensure to use the raw url for your Python code._
+__Part A: Plot showing the 10 year bond yields and inflation rate__
+
+_(a): Using Python, create a single plot showing both the 10 year bond yields and inflation rate for Italy. Use the dates provided by the data._
+
+
+
+
+```{python}
+#| echo: true
+
+
+import pandas as pd
+import plotly.graph_objects as go
+
+# Import and merge data
+inflation_url = "https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch08_italy_inflation.csv"
+bond_url = "https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch08_italy_bond.csv"
+inflation = pd.read_csv(inflation_url, header=0, names=['Date', 'Inflation'])
+bond = pd.read_csv(bond_url, header=0, names=['Date', 'Bond_Yield'])
+italy_rates = pd.merge(inflation, bond, on='Date').assign(Date=lambda df: pd.to_datetime(df['Date']))
+
+# Create and display the figure
+fig = go.Figure([
+    go.Scatter(x=italy_rates['Date'], y=italy_rates['Inflation'], mode='lines', name='Inflation'),
+    go.Scatter(x=italy_rates['Date'], y=italy_rates['Bond_Yield'], mode='lines', name='Bond Yield')
+]).update_layout(
+    title='Italy Inflation and Bond Yield Over Time',
+    xaxis_title='Year',
+    yaxis_title='Rate',
+    margin=dict(l=0, r=0, t=50, b=0),
+    hovermode='x'
+).show()
+
+
+
+
+```
+
+
+## 3. Practice Charting in Python
+
+__Part A: Stock price time series__
+
+_a. The comments below will walk you through importing data on Amazon's (AMZN) stock price over time. Create a time series plot of the stock price with time on the x-axis and price on the y-axis. Don't forget to make the graph look professional by including proper labels, titles, and colors._ 
+
+
+
+```{python}
+#| echo: true
+
+# Step 1: Import the data from Git Hub
+import pandas as pd
+import plotly.graph_objects as go
+
+# Read the CSV file for Amazon stock data
+amzn = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/AMZN.csv')
+
+# Step 2: Convert the date variable to a datetime object
+# Note: Ensure that the column name for the date variable in your dataset matches 'Date'
+amzn['Date'] = pd.to_datetime(amzn['Date'])
+
+# Step 3: Make the time series plot using Plotly :)
+fig = go.Figure()
+
+# trace for the time series data
+fig.add_trace(go.Scatter(x=amzn['Date'], y=amzn['Close'], mode='lines', name='Close'))
+
+# Customizing
+fig.update_layout(
+    title='Amazon Stock Price Over Time',
+    xaxis=dict(title='Date'),
+    yaxis=dict(title='Price'),
+    showlegend=True,
+    template='plotly_white'  # Change template
+)
+
+fig.show()
+
+```
+
+

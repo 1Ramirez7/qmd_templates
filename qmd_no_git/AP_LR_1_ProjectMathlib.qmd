@@ -1,0 +1,192 @@
+---
+title: "Advanced Project: Long Run"
+subtitle: "" # left blank
+author: "Name here"
+date: "March 10, 2025"
+format:
+  html:
+    self-contained: true
+    page-layout: full # article default custom
+    theme:
+      light: [flatly] # more themes can be found (https://quarto.org/docs/output-formats/html-themes.html)
+      dark: [darkly]
+    fontsize: 0.95em # changes all fonts. default is 1
+    linestretch: 1.5 # distance btw lines. defualt is 1.5
+    math: katex
+    toc: true # switch between: false or true
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: true
+        toggle: true
+        caption: See code
+execute:
+  python: .venv/Scripts/python.exe # important. If using this in a folder inside the root folder, use two periods for the program to know to read one folder back: ../.venv/Scripts/python.exe
+editor:
+  markdown:
+    wrap: sentence
+---
+
+
+
+##  1. Imp CSV files and Making Time Series Grpahs
+#This is from the AP_LR_TimeSeriesGraphs file. 
+
+__Part A: Plot of per capita GDP (in Dollars) - Country time series graph__
+
+```{python}
+#| echo: true
+
+
+#importing CSV files and  creating a single and multiple variable time-series graphs.
+# Make a plot of per capita GDP (in dollars) for the years 1950 to 2014 for a country of your choice. Label the x-axis "year" and the y-axis "per capita GDP." 
+# Packages used in this guide.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read the CSV file
+percap_gdp = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch01_gdp.csv')
+
+# The longer code "Enter..." will pront for a country code
+# country_code = input("Enter the country code of the country you want to plot per capita GDP for (e.g., USA): ")
+
+# Code same as above, only one can be selected. 
+country_code = "USA"  # Change to fixed country instead of pront. 
+
+# Filter the data for the selected country
+percap_gdp_country = percap_gdp[percap_gdp['country'] == country_code]
+
+# Plot per capita GDP over the years
+plt.plot(percap_gdp_country['year'], percap_gdp_country['y_pop'])
+
+# Customize the plot
+plt.title(f'{country_code} per capita GDP Over Time')
+plt.xlabel('Year')
+plt.ylabel('Per Capita GDP')
+plt.grid(True)
+
+# Show the plot
+plt.show()
+
+```
+
+
+__Part B: Plot of per capita GDP relative to the US vs 3 other countries__ 
+
+_(b) Make a plot of per capita GDP relative to the United States (US = 100) from 1950 to 2014. The graph should include the United States and three other countries of your choice, all on the same chart. Label the lines in an informative way so that each line can be associated with its country. Finally, write a short description of the plot you create._
+
+```{python}
+#| echo: true
+
+#Packages used in this guide.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Define the list of countries
+three_countries = ['ARM', 'CAN', 'RUS', 'USA']
+
+# Read the CSV file
+percap_gdp = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch01_gdp.csv')
+
+# Filter the data for the selected countries
+percap_gdp = percap_gdp[percap_gdp['country'].isin(three_countries)]
+
+# The following code creates a figure that contains more than one data series. Compare it to the
+# code we wrote for the previous question.
+
+for i in three_countries:
+    plot_dat = percap_gdp.query("country == @i")
+    plt.plot(plot_dat["year"], plot_dat["y_pop_us_100"], label=i)
+
+# Now let's customize the plot. The following code sets labels on the x and y axis and sets the
+# title for the figure. Note that it uses a previously defined variable in the title that changes
+# every time you change your choice of countries (see code cell above)
+
+plt.xlabel("Year")
+plt.ylabel("Per Capita GDP (U.S. = 100)")
+plt.title("Per Capita GDP Relative to the United States (1950-2014) for " + str(three_countries))
+plt.grid()
+plt.legend()
+plt.show()
+
+
+
+
+```
+
+
+## 2. Datetime package
+
+_A date in Python is not a data type on its own, but the module datetime allows us to work with dates as objects. We can use objects to create relationships and illustrations. Importantly for economics, time-series graphs use the datetime module in Python to correctly show dates. A further guide of the module is Here Using the data found Here import the data for ch08_italy_inflation.csv and ch08_italy_bond.csv. Ensure to use the raw url for your Python code._
+__Part A: Plot showing the 10 year bond yields and inflation rate__
+
+_(a): Using Python, create a single plot showing both the 10 year bond yields and inflation rate for Italy. Use the dates provided by the data._
+
+```{python}
+#| echo: true
+
+# Import data 
+inflation_url = "https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch08_italy_inflation.csv"
+inflation = pd.read_csv(inflation_url,header=0, names=['Date', 'Inflation'])
+
+bond_url = "https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/ch08_italy_bond.csv"
+bond = pd.read_csv(bond_url,header=0, names=['Date', 'Bond_Yield'])
+
+# Merge dataframes
+italy_rates = pd.merge(inflation, bond, on='Date', how='outer')
+
+# Plot
+italy_rates['Date'] = pd.to_datetime(italy_rates['Date'])                   
+italy_rates['Year'] = italy_rates['Date'].dt.year                           
+italy_rates.plot(x = 'Year', y = ['Inflation', 'Bond_Yield'], kind = 'line')
+plt.show()
+
+
+
+```
+
+
+## 3. Practice Charting in Python
+
+__Part A: Stock price time series__
+
+_a. The comments below will walk you through importing data on Amazon's (AMZN) stock price over time. Create a time series plot of the stock price with time on the x-axis and price on the y-axis. Don't forget to make the graph look professional by including proper labels, titles, and colors._ 
+
+
+
+```{python}
+#| echo: true
+
+# Step 1: Import the data from Git Hub
+import pandas as pd
+# Read the CSV file for Amazon stock data
+amzn = pd.read_csv('https://raw.githubusercontent.com/dylanjm/econ_381_development/master/data/AMZN.csv')
+
+# Step 2: Convert the date variable to a datetime object
+# Note: Ensure that the column name for the date variable in your dataset matches 'Date'
+amzn['Date'] = pd.to_datetime(amzn['Date'])
+
+# Step 3: Make the time series plot using Matplotlib
+import matplotlib.pyplot as plt
+
+# Plotting the time series data
+plt.plot(amzn['Date'], amzn['Close'])  # Assuming 'Close' column is used as the price variable
+
+# Customizing the plot
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.title('Amazon Stock Price Over Time')
+plt.grid(True)
+
+# Show the plot
+plt.show()
+
+
+```
+
+
+
